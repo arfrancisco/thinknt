@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$id": "https://thinknt.app/schemas/quiz.json",
+  "title": "ThinkntQuiz",
+  "type": "object",
+  "required": ["id", "title", "locale", "difficulty_curve", "rounds"],
+  "properties": {
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "subtitle": { "type": "string" },
+    "locale": {
+      "type": "object",
+      "required": ["primary", "countries"],
+      "properties": {
+        "primary": { "type": "string" },
+        "countries": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "audience": {
+      "type": "object",
+      "properties": {
+        "participants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "age", "country"],
+            "properties": {
+              "name": { "type": "string" },
+              "age": { "type": "integer", "minimum": 10, "maximum": 99 },
+              "country": { "type": "string" }
+            }
+          }
+        },
+        "age_stats": {
+          "type": "object",
+          "properties": { "min": { "type": "integer" }, "max": { "type": "integer" }, "avg": { "type": "number" } }
+        }
+      }
+    },
+    "difficulty_curve": { "type": "string", "enum": ["progressive"] },
+    "rounds": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["round_index", "title", "difficulty", "questions"],
+        "properties": {
+          "round_index": { "type": "integer", "minimum": 1 },
+          "title": { "type": "string" },
+          "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
+          "questions": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/definitions/question" }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "question": {
+      "type": "object",
+      "required": ["id", "type", "prompt", "answer", "difficulty"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["text", "audio", "video", "image", "true_false", "multiple_choice"] },
+        "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
+        "prompt": { "type": "string" },
+        "instructions": { "type": "string" },
+        "media": {
+          "type": "object",
+          "description": "Only for audio/video/image",
+          "properties": {
+            "provider": { "type": "string", "enum": ["youtube", "static"] },
+            "mode": { "type": "string", "enum": ["audio", "video", "image"] },
+            "video_id": { "type": "string" },
+            "start_sec": { "type": "integer", "minimum": 0 },
+            "end_sec": { "type": "integer", "minimum": 1 },
+            "image_url": { "type": "string" }
+          }
+        },
+        "choices": { "type": "array", "minItems": 2, "maxItems": 6, "items": { "type": "string" } },
+        "correct_choice_index": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "answer": {
+          "type": "object",
+          "required": ["display"],
+          "properties": { "display": { "type": "string" }, "explanation": { "type": "string" } }
+        },
+        "anti_spoiler": {
+          "type": "object",
+          "properties": { "hide_titles": { "type": "boolean" }, "auto_stop": { "type": "boolean" }, "max_replays": { "type": "integer", "minimum": 0, "maximum": 5 } }
+        }
+      },
+      "allOf": [
+        { "if": { "properties": { "type": { "const": "multiple_choice" } } }, "then": { "required": ["choices", "correct_choice_index"] } },
+        { "if": { "properties": { "type": { "const": "true_false" } } }, "then": { "properties": { "choices": { "const": ["True","False"] }, "correct_choice_index": { "enum": [0, 1] } } } },
+        { "if": { "properties": { "type": { "enum": ["audio","video","image"] } } }, "then": { "required": ["media"] } }
+      ]
+    }
+  }
+}

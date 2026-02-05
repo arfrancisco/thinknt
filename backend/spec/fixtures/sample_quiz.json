@@ -1,0 +1,121 @@
+{
+  "id": "qz_test_001",
+  "title": "Sample Quiz for Testing",
+  "subtitle": "Testing all question types",
+  "locale": {
+    "primary": "en",
+    "countries": ["US", "UK"]
+  },
+  "audience": {
+    "participants": [
+      {
+        "name": "Test User",
+        "age": 30,
+        "country": "US"
+      }
+    ],
+    "age_stats": {
+      "min": 30,
+      "max": 30,
+      "avg": 30.0
+    }
+  },
+  "difficulty_curve": "progressive",
+  "rounds": [
+    {
+      "round_index": 1,
+      "title": "Easy Round",
+      "difficulty": "easy",
+      "questions": [
+        {
+          "id": "q_001",
+          "type": "text",
+          "difficulty": "easy",
+          "prompt": "What is 2+2?",
+          "answer": {
+            "display": "4",
+            "explanation": "Basic arithmetic"
+          }
+        },
+        {
+          "id": "q_002",
+          "type": "true_false",
+          "difficulty": "easy",
+          "prompt": "The Earth is round.",
+          "choices": ["True", "False"],
+          "correct_choice_index": 0,
+          "answer": {
+            "display": "True"
+          }
+        },
+        {
+          "id": "q_003",
+          "type": "multiple_choice",
+          "difficulty": "easy",
+          "prompt": "What color is the sky?",
+          "choices": ["Blue", "Green", "Red", "Yellow"],
+          "correct_choice_index": 0,
+          "answer": {
+            "display": "Blue"
+          }
+        },
+        {
+          "id": "q_004",
+          "type": "image",
+          "difficulty": "easy",
+          "prompt": "What is this?",
+          "media": {
+            "provider": "static",
+            "mode": "image",
+            "image_url": "https://example.com/image.jpg"
+          },
+          "answer": {
+            "display": "A cat"
+          }
+        },
+        {
+          "id": "q_005",
+          "type": "audio",
+          "difficulty": "easy",
+          "prompt": "Name this song",
+          "media": {
+            "provider": "youtube",
+            "mode": "audio",
+            "video_id": "dQw4w9WgXcQ",
+            "start_sec": 10,
+            "end_sec": 20
+          },
+          "answer": {
+            "display": "Never Gonna Give You Up"
+          },
+          "anti_spoiler": {
+            "hide_titles": true,
+            "auto_stop": true,
+            "max_replays": 2
+          }
+        },
+        {
+          "id": "q_006",
+          "type": "video",
+          "difficulty": "easy",
+          "prompt": "Name this movie scene",
+          "media": {
+            "provider": "youtube",
+            "mode": "video",
+            "video_id": "dQw4w9WgXcQ",
+            "start_sec": 30,
+            "end_sec": 45
+          },
+          "answer": {
+            "display": "Rick Roll"
+          },
+          "anti_spoiler": {
+            "hide_titles": true,
+            "auto_stop": false,
+            "max_replays": 3
+          }
+        }
+      ]
+    }
+  ]
+}
