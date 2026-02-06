@@ -146,6 +146,7 @@ GEM
       net-smtp
     marcel (1.1.0)
     mini_mime (1.1.5)
+    mini_portile2 (2.8.9)
     minitest (6.0.1)
       prism (~> 1.5)
     msgpack (1.8.0)
@@ -251,6 +252,8 @@ GEM
     securerandom (0.4.1)
     shoulda-matchers (7.0.1)
       activesupport (>= 7.1)
+    sqlite3 (1.7.3)
+      mini_portile2 (~> 2.8.0)
     stringio (3.2.0)
     thor (1.5.0)
     timeout (0.6.0)
@@ -284,6 +287,7 @@ DEPENDENCIES
   rspec-rails
   ruby-openai
   shoulda-matchers
+  sqlite3 (~> 1.4)
   tzinfo-data
   webmock
 
