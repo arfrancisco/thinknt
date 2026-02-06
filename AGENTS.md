@@ -85,6 +85,93 @@ Key differences from local dev:
 - `VITE_API_URL` is baked into the JS bundle at build time (passed as a Docker build arg), not at runtime.
 - `CORS_ORIGINS` must include the frontend's origin (e.g., `http://localhost:8080` for local Docker, or the Fly.io URL for production).
 
+## Deploying to Fly.io
+
+Both apps deploy to Fly.io via Docker. Deploy the backend first so you have its URL for the frontend build.
+
+### Prerequisites
+
+- Install the Fly CLI: `brew install flyctl` (or see https://fly.io/docs/flyctl/install/)
+- Authenticate: `fly auth login`
+
+### 1. Deploy the Backend
+
+```bash
+cd backend
+
+# Create the Fly app (detects Dockerfile automatically)
+fly launch
+# - Say NO to databases (we use SQLite)
+# - Pick a region close to you
+
+# Create a persistent volume for SQLite (in same region as the app)
+fly volumes create data --size 1 --region <your-region>
+```
+
+After `fly launch` generates `fly.toml`, add the volume mount so SQLite data persists across deploys:
+
+```toml
+[mounts]
+  source = "data"
+  destination = "/app/db"
+```
+
+Set secrets and deploy:
+
+```bash
+fly secrets set \
+  OPENAI_API_KEY="sk-..." \
+  SECRET_KEY_BASE="$(openssl rand -hex 64)" \
+  CORS_ORIGINS="https://<your-frontend-app>.fly.dev"
+
+fly deploy
+```
+
+The backend URL will be `https://<your-backend-app>.fly.dev`.
+
+### 2. Deploy the Frontend
+
+```bash
+cd frontend
+
+# Create the Fly app
+fly launch
+# - Pick the same region as the backend
+```
+
+After `fly launch` generates `fly.toml`, add the build arg so the frontend knows the backend URL:
+
+```toml
+[build]
+  [build.args]
+    VITE_API_URL = "https://<your-backend-app>.fly.dev"
+```
+
+Then deploy:
+
+```bash
+fly deploy
+```
+
+The frontend URL will be `https://<your-frontend-app>.fly.dev`.
+
+### Post-Deploy Checklist
+
+- Verify `CORS_ORIGINS` on the backend includes the frontend's Fly.io URL
+- `VITE_API_URL` is baked in at build time — if the backend URL changes, redeploy the frontend
+- The backend volume is pinned to one region and one machine. Don't scale to multiple instances (SQLite doesn't support concurrent writes from multiple processes)
+- To redeploy after code changes: `fly deploy` from the respective app directory
+
+### Useful Fly Commands
+
+```bash
+fly status              # App status and machines
+fly logs                # Tail live logs
+fly ssh console         # SSH into the running machine
+fly secrets list        # List set secrets
+fly volumes list        # List volumes
+```
+
 ## Running Tests
 
 ```bash
