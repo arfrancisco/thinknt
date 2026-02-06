@@ -7,12 +7,13 @@ Ruby on Rails 7.1 API-only application. Manages quiz creation, async generation 
 ## Tech Stack
 
 - Ruby ~> 3.0, Rails ~> 7.1
-- SQLite (dev/test), PostgreSQL (production)
+- SQLite for all environments (no PostgreSQL)
 - `ruby-openai` gem for OpenAI API
 - `json-schema` gem for quiz data validation
 - `dotenv-rails` for loading `.env` in dev/test
 - Puma web server
 - ActiveJob for background processing (inline adapter in dev, no Redis/Sidekiq)
+- Docker: `ruby:3.2-slim` base image, deployed to Fly.io
 
 ## Project Structure
 
@@ -99,19 +100,41 @@ OpenAI API calls are stubbed via WebMock in all specs. The `spec/fixtures/sample
 
 ## Environment Variables
 
-| Variable        | Required | Description          |
-|-----------------|----------|----------------------|
-| OPENAI_API_KEY  | Yes      | OpenAI API key       |
-| RAILS_ENV       | No       | Defaults to development |
+| Variable         | Required | Description                                                              |
+|------------------|----------|--------------------------------------------------------------------------|
+| OPENAI_API_KEY   | Yes      | OpenAI API key                                                           |
+| SECRET_KEY_BASE  | Yes (prod) | Rails secret key (generate with `openssl rand -hex 64`)               |
+| CORS_ORIGINS     | No       | Comma-separated allowed origins (default: `localhost:5173,3001,8080`)    |
+| RAILS_ENV        | No       | Defaults to `development`; Dockerfile sets `production`                  |
 
-Copy `.env.example` to `.env` and fill in values. Never commit `.env`.
+For local dev, copy `.env.example` to `.env` and fill in values. Never commit `.env`.
 
-The `.env` file is loaded by `dotenv-rails` (dev/test only). In production, set env vars through your hosting platform. If `OPENAI_API_KEY` is missing or invalid, quiz generation will fail with a 401 error from OpenAI.
+The `.env` file is loaded by `dotenv-rails` (dev/test only). In production (Docker/Fly.io), set env vars via `docker run -e` or `fly secrets set`. If `OPENAI_API_KEY` is missing or invalid, quiz generation will fail with a 401 error from OpenAI.
+
+## Docker
+
+```bash
+docker build -t thinknt-backend .
+docker run --rm -d -p 3001:3000 \
+  -e OPENAI_API_KEY="sk-..." \
+  -e SECRET_KEY_BASE="$(openssl rand -hex 64)" \
+  thinknt-backend
+```
+
+The Dockerfile:
+- Uses `ruby:3.2-slim` with `build-essential`, `libsqlite3-dev`, `libyaml-dev`
+- Excludes `development` and `test` gem groups
+- Fixes CRLF line endings in `bin/` scripts automatically (`sed -i 's/\r$//' bin/*`)
+- Sets `RAILS_ENV=production` and `RAILS_LOG_TO_STDOUT=1`
+- Runs `db:prepare` at container startup (not build time) so the SQLite file is created at runtime
+- For Fly.io, the SQLite database should live on a persistent volume
 
 ## Setup Gotchas
 
-- **CRLF line endings in `bin/` scripts**: The `bin/rails`, `bin/rake`, `bin/setup`, and `bin/server` scripts may have Windows-style CRLF line endings, causing `env: ruby\r: No such file or directory`. Fix with: `perl -pi -e 's/\r\n/\n/g' bin/*`
+- **CRLF line endings in `bin/` scripts**: The `bin/rails`, `bin/rake`, `bin/setup`, and `bin/server` scripts may have Windows-style CRLF line endings, causing `env: ruby\r: No such file or directory`. Fix with: `perl -pi -e 's/\r\n/\n/g' bin/*` (the Dockerfile handles this automatically).
 - **dotenv-rails is essential**: Without it, Rails won't load the `.env` file and `ENV["OPENAI_API_KEY"]` will be empty. The OpenAI initializer (`config/initializers/openai.rb`) defaults to an empty string, which causes a silent 401 failure at generation time rather than a startup error.
+- **CORS**: The `CORS_ORIGINS` env var must include the frontend's origin. If the frontend is on a different port or domain and API requests silently fail (no request hits the backend logs), CORS is the likely cause.
+- **SQLite in production**: Rails will log a warning about SQLite in production. This is expected and harmless for this single-user app.
 
 ## Guidelines
 

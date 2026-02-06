@@ -118,6 +118,19 @@ npm run build     # Production build to dist/
 npm run lint      # ESLint
 ```
 
+## Docker
+
+```bash
+docker build --build-arg VITE_API_URL=http://localhost:3001 -t thinknt-frontend .
+docker run --rm -d -p 8080:80 thinknt-frontend
+```
+
+The Dockerfile:
+- Multi-stage build: `node:22-slim` runs `npm ci && npm run build`, then `nginx:alpine` serves the `dist/` output
+- `VITE_API_URL` is passed as a build arg and baked into the JS bundle at build time — it cannot be changed at runtime. Rebuild the image to point to a different backend.
+- `nginx.conf` handles SPA routing (`try_files $uri $uri/ /index.html`) and caches `/assets/` with a 1-year expiry
+- For Fly.io deployment, pass the production backend URL as the build arg (e.g., `--build-arg VITE_API_URL=https://thinknt-api.fly.dev`)
+
 ## Testing
 
 No test suite is configured. There are no unit or integration tests for the frontend.

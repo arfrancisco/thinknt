@@ -16,7 +16,7 @@ These are independent apps with separate dependency management. There is no shar
 
 ## Architecture
 
-- **Backend** (`backend/`): Rails API-only app. Single resource (`Quiz`) with async generation via `ActiveJob`. OpenAI integration in a service object. JSON Schema validation for all generated quiz data. SQLite in dev/test, PostgreSQL in production.
+- **Backend** (`backend/`): Rails API-only app. Single resource (`Quiz`) with async generation via `ActiveJob`. OpenAI integration in a service object. JSON Schema validation for all generated quiz data. SQLite for all environments.
 - **Frontend** (`frontend/`): Vite-powered React SPA. Two pages: quiz creation form and full-screen presenter mode. Communicates with backend via Axios. YouTube integration via `react-youtube` for audio/video questions.
 - **Data flow**: Frontend POSTs quiz params → Backend creates Quiz record (status: `generating`) and enqueues `GenerateQuizJob` → Job calls `OpenaiQuizGenerator` → OpenAI returns JSON → Validated against schema → Quiz updated to `ready` → Frontend polls `GET /api/quizzes/:id` until ready → Redirects to presenter.
 
@@ -28,7 +28,7 @@ These are independent apps with separate dependency management. There is no shar
 - Quiz data structure is enforced by `config/quiz_schema.json` — any changes to quiz structure must update this schema.
 - Environment variables: backend uses `.env` (loaded by `dotenv-rails`), frontend uses `.env.local` (loaded by Vite). Never commit these files.
 - The `OPENAI_API_KEY` env var is required for quiz generation. Without it (or with an invalid key), the backend returns a 401-based generation failure.
-- CORS is configured to allow `localhost:5173` (Vite dev server) and `localhost:3001`.
+- CORS origins are configurable via the `CORS_ORIGINS` env var (comma-separated). Defaults to `localhost:5173,localhost:3001,localhost:8080`.
 
 ## Running the Project
 
@@ -52,6 +52,38 @@ npm run dev                     # http://localhost:5173
 - **`dotenv-rails` is required** — the backend relies on this gem to load `backend/.env` into the environment. Without it, `OPENAI_API_KEY` is empty and OpenAI returns a 401.
 - **`bin/` scripts may have CRLF line endings** — if you get `env: ruby\r: No such file or directory`, fix with: `perl -pi -e 's/\r\n/\n/g' bin/*`
 - **OpenAI API key must be valid with active billing** — a 401 error on quiz generation means the key is missing, invalid, or has no payment method attached.
+
+## Running with Docker
+
+Both apps have Dockerfiles for containerized deployment. They are designed for Fly.io but work locally too.
+
+```bash
+# Build images
+docker build -t thinknt-backend ./backend
+docker build --build-arg VITE_API_URL=http://localhost:3001 -t thinknt-frontend ./frontend
+
+# Run containers
+source backend/.env
+docker run --rm -d --name thinknt-backend -p 3001:3000 \
+  -e OPENAI_API_KEY="$OPENAI_API_KEY" \
+  -e SECRET_KEY_BASE="$(openssl rand -hex 64)" \
+  thinknt-backend
+
+docker run --rm -d --name thinknt-frontend -p 8080:80 \
+  thinknt-frontend
+
+# Frontend: http://localhost:8080
+# Backend API: http://localhost:3001
+
+# Stop containers
+docker stop thinknt-backend thinknt-frontend
+```
+
+Key differences from local dev:
+- Backend runs in `RAILS_ENV=production` with SQLite. Database is created at container startup via `db:prepare`.
+- Frontend is a multi-stage build: Node builds the Vite app, then Nginx Alpine serves the static `dist/` files.
+- `VITE_API_URL` is baked into the JS bundle at build time (passed as a Docker build arg), not at runtime.
+- `CORS_ORIGINS` must include the frontend's origin (e.g., `http://localhost:8080` for local Docker, or the Fly.io URL for production).
 
 ## Running Tests
 
