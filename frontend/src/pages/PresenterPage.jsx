@@ -104,14 +104,45 @@ function PresenterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white">
       {/* Header */}
-      <div className="bg-black bg-opacity-50 px-8 py-4 flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">
-            {currentRound.title} - {currentRound.difficulty.toUpperCase()}
-          </h2>
+      <div className="bg-black bg-opacity-50 px-8 py-4">
+        <div className="flex justify-between items-center mb-3">
+          <div>
+            <h2 className="text-2xl font-bold">
+              {currentRound.title} - {currentRound.difficulty.toUpperCase()}
+            </h2>
+          </div>
+          <div className="text-xl font-medium">
+            Question {currentQuestionNumber} / {totalQuestions}
+          </div>
         </div>
-        <div className="text-xl font-medium">
-          Question {currentQuestionNumber} / {totalQuestions}
+        
+        {/* Progress Bar */}
+        <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+          <div 
+            className="bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 h-full transition-all duration-500 ease-out"
+            style={{ width: `${(currentQuestionNumber / totalQuestions) * 100}%` }}
+          ></div>
+        </div>
+        
+        {/* Round Progress Dots */}
+        <div className="flex justify-center gap-2 mt-3">
+          {quiz.rounds.map((round, idx) => (
+            <div key={idx} className="flex items-center">
+              <div 
+                className={`w-3 h-3 rounded-full transition-all ${
+                  idx < currentRoundIndex 
+                    ? 'bg-green-500' 
+                    : idx === currentRoundIndex 
+                    ? 'bg-blue-500 ring-2 ring-blue-300' 
+                    : 'bg-gray-600'
+                }`}
+                title={`Round ${idx + 1}: ${round.title}`}
+              />
+              {idx < quiz.rounds.length - 1 && (
+                <div className={`w-8 h-0.5 ${idx < currentRoundIndex ? 'bg-green-500' : 'bg-gray-600'}`} />
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
