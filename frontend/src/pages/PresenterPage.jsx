@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getQuiz } from '../services/api';
 import QuestionFrame from '../components/QuestionFrame';
 import AnswerReveal from '../components/AnswerReveal';
 
 function PresenterPage() {
   const { quizId } = useParams();
+  const navigate = useNavigate();
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -180,9 +181,15 @@ function PresenterPage() {
       {showAnswer && <AnswerReveal question={currentQuestion} onClose={() => setShowAnswer(false)} />}
 
       {/* Keyboard Hints */}
-      <div className="fixed top-4 right-4 bg-black bg-opacity-70 px-4 py-2 rounded text-sm">
+      <div className="fixed bottom-24 right-4 bg-black bg-opacity-70 px-4 py-2 rounded text-sm space-y-1">
         <div>Space: Reveal Answer</div>
         <div>→ Arrow: Next</div>
+        <button
+          onClick={() => navigate(`/edit/${quizId}`)}
+          className="mt-2 w-full px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
+        >
+          Edit Quiz JSON
+        </button>
       </div>
     </div>
   );

@@ -28,8 +28,16 @@ export const regenerateQuestion = async (quizId, scope, questionId, notes) => {
   return response.data;
 };
 
+export const updateQuiz = async (quizId, quizData) => {
+  const response = await api.put(`/quizzes/${quizId}`, {
+    quiz_data: JSON.stringify(quizData),
+  });
+  return response.data;
+};
+
 export default {
   createQuiz,
   getQuiz,
   regenerateQuestion,
+  updateQuiz,
 };

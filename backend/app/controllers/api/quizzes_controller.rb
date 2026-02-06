@@ -59,6 +59,42 @@ module Api
     rescue ActiveRecord::RecordNotFound
       render json: { error: 'Quiz not found' }, status: :not_found
     end
+    
+    def update
+      quiz = Quiz.find(params[:id])
+      
+      unless quiz.ready?
+        render json: { error: 'Can only edit ready quizzes' }, status: :unprocessable_entity
+        return
+      end
+      
+      # Parse and validate the quiz JSON
+      quiz_data = JSON.parse(params[:quiz_data])
+      
+      # Validate against schema
+      schema = JSON.parse(File.read(Rails.root.join('config', 'quiz_schema.json')))
+      errors = JSON::Validator.fully_validate(schema, quiz_data)
+      
+      if errors.any?
+        render json: { 
+          error: 'Invalid quiz data', 
+          validation_errors: errors 
+        }, status: :unprocessable_entity
+        return
+      end
+      
+      quiz.update!(quiz_data: quiz_data)
+      
+      render json: {
+        id: quiz.id,
+        status: quiz.status,
+        quiz: quiz.quiz_data
+      }
+    rescue JSON::ParserError => e
+      render json: { error: "Invalid JSON: #{e.message}" }, status: :unprocessable_entity
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: 'Quiz not found' }, status: :not_found
+    end
 
     private
 

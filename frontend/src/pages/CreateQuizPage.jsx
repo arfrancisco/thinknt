@@ -60,7 +60,18 @@ function CreateQuizPage() {
         
         if (data.status === 'ready') {
           clearInterval(poll);
-          navigate(`/presenter/${quizId}`);
+          setIsGenerating(false);
+          
+          // Ask user if they want to edit or present
+          const shouldEdit = window.confirm(
+            'Quiz generated successfully!\n\nClick OK to edit the quiz JSON, or Cancel to go directly to presenter mode.'
+          );
+          
+          if (shouldEdit) {
+            navigate(`/edit/${quizId}`);
+          } else {
+            navigate(`/presenter/${quizId}`);
+          }
         } else if (data.status === 'failed') {
           clearInterval(poll);
           setIsGenerating(false);
