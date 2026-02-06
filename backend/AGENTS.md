@@ -7,13 +7,20 @@ Ruby on Rails 7.1 API-only application. Manages quiz creation, async generation 
 ## Tech Stack
 
 - Ruby ~> 3.0, Rails ~> 7.1
+<<<<<<< HEAD
 - SQLite for all environments (no PostgreSQL)
+=======
+- SQLite (dev/test), PostgreSQL (production)
+>>>>>>> 071a39f (fix merge)
 - `ruby-openai` gem for OpenAI API
 - `json-schema` gem for quiz data validation
 - `dotenv-rails` for loading `.env` in dev/test
 - Puma web server
 - ActiveJob for background processing (inline adapter in dev, no Redis/Sidekiq)
+<<<<<<< HEAD
 - Docker: `ruby:3.2-slim` base image, deployed to Fly.io
+=======
+>>>>>>> 071a39f (fix merge)
 
 ## Project Structure
 
@@ -100,6 +107,7 @@ OpenAI API calls are stubbed via WebMock in all specs. The `spec/fixtures/sample
 
 ## Environment Variables
 
+<<<<<<< HEAD
 | Variable         | Required | Description                                                              |
 |------------------|----------|--------------------------------------------------------------------------|
 | OPENAI_API_KEY   | Yes      | OpenAI API key                                                           |
@@ -135,6 +143,21 @@ The Dockerfile:
 - **dotenv-rails is essential**: Without it, Rails won't load the `.env` file and `ENV["OPENAI_API_KEY"]` will be empty. The OpenAI initializer (`config/initializers/openai.rb`) defaults to an empty string, which causes a silent 401 failure at generation time rather than a startup error.
 - **CORS**: The `CORS_ORIGINS` env var must include the frontend's origin. If the frontend is on a different port or domain and API requests silently fail (no request hits the backend logs), CORS is the likely cause.
 - **SQLite in production**: Rails will log a warning about SQLite in production. This is expected and harmless for this single-user app.
+=======
+| Variable        | Required | Description          |
+|-----------------|----------|----------------------|
+| OPENAI_API_KEY  | Yes      | OpenAI API key       |
+| RAILS_ENV       | No       | Defaults to development |
+
+Copy `.env.example` to `.env` and fill in values. Never commit `.env`.
+
+The `.env` file is loaded by `dotenv-rails` (dev/test only). In production, set env vars through your hosting platform. If `OPENAI_API_KEY` is missing or invalid, quiz generation will fail with a 401 error from OpenAI.
+
+## Setup Gotchas
+
+- **CRLF line endings in `bin/` scripts**: The `bin/rails`, `bin/rake`, `bin/setup`, and `bin/server` scripts may have Windows-style CRLF line endings, causing `env: ruby\r: No such file or directory`. Fix with: `perl -pi -e 's/\r\n/\n/g' bin/*`
+- **dotenv-rails is essential**: Without it, Rails won't load the `.env` file and `ENV["OPENAI_API_KEY"]` will be empty. The OpenAI initializer (`config/initializers/openai.rb`) defaults to an empty string, which causes a silent 401 failure at generation time rather than a startup error.
+>>>>>>> 071a39f (fix merge)
 
 ## Guidelines
 
