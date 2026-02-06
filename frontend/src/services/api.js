@@ -35,9 +35,15 @@ export const updateQuiz = async (quizId, quizData) => {
   return response.data;
 };
 
+export const regenerateQuiz = async (quizId) => {
+  const response = await api.post(`/quizzes/${quizId}/regenerate`);
+  return response.data;
+};
+
 export default {
   createQuiz,
   getQuiz,
   regenerateQuestion,
   updateQuiz,
+  regenerateQuiz,
 };

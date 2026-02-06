@@ -6,7 +6,6 @@ RSpec.describe "API Quizzes", type: :request do
       {
         theme: "Movies",
         participants: [{ name: "Bob", age: 35, country: "UK" }],
-        countries: ["UK"],
         rounds: 2,
         questions_per_round: 5,
         brainrot_level: "low",
@@ -32,6 +31,8 @@ RSpec.describe "API Quizzes", type: :request do
       expect(quiz.generation_params['rounds']).to eq(2)
       expect(quiz.generation_params['questions_per_round']).to eq(5)
       expect(quiz.generation_params['brainrot_level']).to eq('low')
+      # Countries are no longer stored - they're derived from participants
+      expect(quiz.generation_params['countries']).to be_nil
     end
 
     it "enqueues a background job" do
@@ -121,7 +122,6 @@ RSpec.describe "API Quizzes", type: :request do
       {
         'theme' => 'Movies',
         'participants' => [{ 'name' => 'Bob', 'age' => 35, 'country' => 'UK' }],
-        'countries' => ['UK'],
         'rounds' => 2,
         'questions_per_round' => 5,
         'brainrot_level' => 'low',

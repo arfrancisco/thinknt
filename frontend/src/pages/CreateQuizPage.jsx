@@ -6,15 +6,15 @@ function CreateQuizPage() {
   const navigate = useNavigate();
   const [theme, setTheme] = useState('');
   const [participants, setParticipants] = useState([{ name: '', age: '', country: '' }]);
-  const [selectedCountries, setSelectedCountries] = useState(['Philippines', 'UK', 'Italy']);
   const [selectedTypes, setSelectedTypes] = useState(['text', 'audio', 'video', 'true_false', 'multiple_choice']);
   const [rounds, setRounds] = useState(3);
   const [questionsPerRound, setQuestionsPerRound] = useState(7);
   const [brainrotLevel, setBrainrotLevel] = useState('medium');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [quizReady, setQuizReady] = useState(false);
+  const [generatedQuizId, setGeneratedQuizId] = useState(null);
   const [error, setError] = useState('');
 
-  const availableCountries = ['Philippines', 'UK', 'Italy', 'US', 'Canada', 'Australia', 'Japan', 'Germany', 'France', 'Spain'];
   const questionTypes = ['text', 'audio', 'video', 'true_false', 'multiple_choice'];
 
   const addParticipant = () => {
@@ -31,14 +31,6 @@ function CreateQuizPage() {
     const updated = [...participants];
     updated[index][field] = value;
     setParticipants(updated);
-  };
-
-  const toggleCountry = (country) => {
-    if (selectedCountries.includes(country)) {
-      setSelectedCountries(selectedCountries.filter(c => c !== country));
-    } else {
-      setSelectedCountries([...selectedCountries, country]);
-    }
   };
 
   const toggleType = (type) => {
@@ -61,17 +53,8 @@ function CreateQuizPage() {
         if (data.status === 'ready') {
           clearInterval(poll);
           setIsGenerating(false);
-          
-          // Ask user if they want to edit or present
-          const shouldEdit = window.confirm(
-            'Quiz generated successfully!\n\nClick OK to edit the quiz JSON, or Cancel to go directly to presenter mode.'
-          );
-          
-          if (shouldEdit) {
-            navigate(`/edit/${quizId}`);
-          } else {
-            navigate(`/presenter/${quizId}`);
-          }
+          setQuizReady(true);
+          setGeneratedQuizId(quizId);
         } else if (data.status === 'failed') {
           clearInterval(poll);
           setIsGenerating(false);
@@ -96,11 +79,14 @@ function CreateQuizPage() {
 
     const validParticipants = participants.filter(p => p.name && p.age && p.country);
     
-    if (!theme || validParticipants.length === 0 || selectedCountries.length === 0 || selectedTypes.length === 0) {
+    if (!theme || validParticipants.length === 0 || selectedTypes.length === 0) {
       setError('Please fill in all required fields');
       setIsGenerating(false);
       return;
     }
+
+    // Derive countries from participants
+    const countries = [...new Set(validParticipants.map(p => p.country))];
 
     try {
       const payload = {
@@ -110,7 +96,7 @@ function CreateQuizPage() {
           age: parseInt(p.age),
           country: p.country
         })),
-        countries: selectedCountries,
+        countries: countries,
         rounds,
         questions_per_round: questionsPerRound,
         brainrot_level: brainrotLevel,
@@ -205,29 +191,6 @@ function CreateQuizPage() {
             </button>
           </div>
 
-          {/* Countries */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Countries *
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {availableCountries.map((country) => (
-                <button
-                  key={country}
-                  type="button"
-                  onClick={() => toggleCountry(country)}
-                  className={`px-4 py-2 rounded-lg border ${
-                    selectedCountries.includes(country)
-                      ? 'bg-purple-500 text-white border-purple-500'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-purple-300'
-                  }`}
-                >
-                  {country}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Question Types */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -302,24 +265,49 @@ function CreateQuizPage() {
             </div>
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isGenerating}
-            className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            {isGenerating ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Generating Quiz...
-              </span>
-            ) : (
-              'Generate Quiz'
-            )}
-          </button>
+          {/* Submit Button / Success Actions */}
+          {!quizReady ? (
+            <button
+              type="submit"
+              disabled={isGenerating}
+              className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {isGenerating ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Generating Quiz...
+                </span>
+              ) : (
+                'Generate Quiz'
+              )}
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <div className="text-center mb-4">
+                <div className="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-lg">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Quiz Generated Successfully!
+                </div>
+              </div>
+              <button
+                onClick={() => navigate(`/presenter/${generatedQuizId}`)}
+                className="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg"
+              >
+                Start Presenter Mode →
+              </button>
+              <button
+                onClick={() => navigate(`/edit/${generatedQuizId}`)}
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all"
+              >
+                Edit Quiz JSON
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>

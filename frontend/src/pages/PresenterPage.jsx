@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getQuiz } from '../services/api';
 import QuestionFrame from '../components/QuestionFrame';
 import AnswerReveal from '../components/AnswerReveal';
+import RoundTransition from '../components/RoundTransition';
+import QuizIntro from '../components/QuizIntro';
 
 function PresenterPage() {
   const { quizId } = useParams();
@@ -13,6 +15,8 @@ function PresenterPage() {
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [showRoundTransition, setShowRoundTransition] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
 
   useEffect(() => {
     loadQuiz();
@@ -20,18 +24,26 @@ function PresenterPage() {
 
   useEffect(() => {
     const handleKeyPress = (e) => {
-      if (e.code === 'Space') {
+      if (e.code === 'ArrowRight') {
         e.preventDefault();
-        setShowAnswer(!showAnswer);
-      } else if (e.code === 'ArrowRight') {
+        if (showIntro) {
+          setShowIntro(false);
+        } else if (showRoundTransition) {
+          handleContinueRound();
+        } else {
+          handleNext();
+        }
+      } else if (e.code === 'ArrowLeft') {
         e.preventDefault();
-        handleNext();
+        if (!showRoundTransition && !showIntro) {
+          handlePrevious();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [showAnswer, currentRoundIndex, currentQuestionIndex]);
+  }, [showAnswer, currentRoundIndex, currentQuestionIndex, showRoundTransition, showIntro]);
 
   const loadQuiz = async () => {
     try {
@@ -63,14 +75,39 @@ function PresenterPage() {
     if (currentQuestionIndex < currentRound.questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else if (currentRoundIndex < quiz.rounds.length - 1) {
-      setCurrentRoundIndex(currentRoundIndex + 1);
-      setCurrentQuestionIndex(0);
+      // Show round transition instead of going directly to next round
+      setShowRoundTransition(true);
+    }
+  };
+
+  const handleContinueRound = () => {
+    setShowRoundTransition(false);
+    setCurrentRoundIndex(currentRoundIndex + 1);
+    setCurrentQuestionIndex(0);
+  };
+
+  const handlePrevious = () => {
+    if (!quiz) return;
+
+    if (showAnswer) {
+      setShowAnswer(false);
+      return;
+    }
+
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    } else if (currentRoundIndex > 0) {
+      setCurrentRoundIndex(currentRoundIndex - 1);
+      const previousRound = quiz.rounds[currentRoundIndex - 1];
+      setCurrentQuestionIndex(previousRound.questions.length - 1);
     }
   };
 
   const handleReveal = () => {
     setShowAnswer(!showAnswer);
   };
+
+  const isFirstQuestion = currentRoundIndex === 0 && currentQuestionIndex === 0;
 
   if (loading) {
     return (
@@ -101,6 +138,11 @@ function PresenterPage() {
 
   const isLastQuestion = currentRoundIndex === quiz.rounds.length - 1 && 
                          currentQuestionIndex === currentRound.questions.length - 1;
+
+  // Show intro first
+  if (showIntro) {
+    return <QuizIntro quiz={quiz} onStart={() => setShowIntro(false)} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white">
@@ -154,35 +196,57 @@ function PresenterPage() {
 
       {/* Controls */}
       <div className="fixed bottom-0 left-0 right-0 bg-black bg-opacity-50 px-8 py-6 flex justify-between items-center">
-        <button
-          onClick={handleReveal}
-          className="px-8 py-4 bg-yellow-500 hover:bg-yellow-600 text-black font-bold rounded-lg text-xl transition-colors"
-        >
-          {showAnswer ? 'Hide Answer' : 'Reveal Answer'}
-        </button>
-
-        {!isLastQuestion && (
+        <div className="flex gap-4">
+          {!isFirstQuestion && (
+            <button
+              onClick={handlePrevious}
+              className="px-8 py-4 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg text-xl transition-colors"
+            >
+              ← Previous
+            </button>
+          )}
           <button
-            onClick={handleNext}
-            className="px-8 py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg text-xl transition-colors"
+            onClick={handleReveal}
+            className="px-8 py-4 bg-yellow-500 hover:bg-yellow-600 text-black font-bold rounded-lg text-xl transition-colors"
           >
-            Next Question →
+            {showAnswer ? 'Hide Answer' : 'Reveal Answer'}
           </button>
-        )}
+        </div>
 
-        {isLastQuestion && showAnswer && (
-          <div className="px-8 py-4 bg-purple-500 text-white font-bold rounded-lg text-xl">
-            Quiz Complete!
-          </div>
-        )}
+        <div>
+          {!isLastQuestion && (
+            <button
+              onClick={handleNext}
+              className="px-8 py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg text-xl transition-colors"
+            >
+              Next Question →
+            </button>
+          )}
+
+          {isLastQuestion && showAnswer && (
+            <div className="px-8 py-4 bg-purple-500 text-white font-bold rounded-lg text-xl">
+              Quiz Complete!
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Answer Reveal Overlay */}
       {showAnswer && <AnswerReveal question={currentQuestion} onClose={() => setShowAnswer(false)} />}
 
+      {/* Round Transition Overlay */}
+      {showRoundTransition && (
+        <RoundTransition
+          currentRound={currentRound}
+          nextRound={quiz.rounds[currentRoundIndex + 1]}
+          onContinue={handleContinueRound}
+          totalRounds={quiz.rounds.length}
+        />
+      )}
+
       {/* Keyboard Hints */}
       <div className="fixed bottom-24 right-4 bg-black bg-opacity-70 px-4 py-2 rounded text-sm space-y-1">
-        <div>Space: Reveal Answer</div>
+        <div>← Arrow: Previous</div>
         <div>→ Arrow: Next</div>
         <button
           onClick={() => navigate(`/edit/${quizId}`)}

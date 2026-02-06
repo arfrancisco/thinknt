@@ -5,7 +5,6 @@ RSpec.describe OpenaiQuizGenerator do
     {
       theme: "Space Exploration",
       participants: [{ name: "Alice", age: 28, country: "US" }],
-      countries: ["US", "UK"],
       rounds: 3,
       questions_per_round: 5,
       brainrot_level: "medium",

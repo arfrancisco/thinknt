@@ -148,6 +148,17 @@ function VideoRenderer({ question }) {
           top: 0;
           left: 0;
           right: 0;
+          height: 80px;
+          background: #000000;
+          pointer-events: none;
+          z-index: 10;
+        }
+        .youtube-wrapper::before {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
           height: 60px;
           background: #000000;
           pointer-events: none;

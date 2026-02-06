@@ -6,7 +6,6 @@ FactoryBot.define do
       {
         'theme' => theme,
         'participants' => [],
-        'countries' => [],
         'rounds' => 3,
         'questions_per_round' => 7,
         'brainrot_level' => 'medium',

@@ -35,9 +35,18 @@ function AnswerReveal({ question, onClose }) {
       onClick={onClose}
     >
       <div 
-        className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl p-12 max-w-4xl w-full mx-4 shadow-2xl transform animate-slideUp"
+        className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl p-12 max-w-4xl w-full mx-4 shadow-2xl transform animate-slideUp relative"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Close X Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-10 h-10 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full flex items-center justify-center text-white text-2xl font-bold transition-all"
+          aria-label="Close"
+        >
+          ×
+        </button>
+
         {/* Header */}
         <div className="text-center mb-8">
           <h2 className="text-6xl font-black text-white mb-2 drop-shadow-lg">
@@ -51,31 +60,23 @@ function AnswerReveal({ question, onClose }) {
           {renderCorrectChoice()}
         </div>
 
-        {/* Main Answer */}
-        <div className="bg-white bg-opacity-20 rounded-2xl p-8 mb-6">
-          <p className="text-4xl font-bold text-white text-center leading-relaxed">
-            {question.answer.display}
-          </p>
-        </div>
+        {/* Main Answer (only for non-MCQ/T-F questions) */}
+        {!['multiple_choice', 'true_false'].includes(question.type) && (
+          <div className="bg-white bg-opacity-20 rounded-2xl p-8 mb-6">
+            <p className="text-4xl font-bold text-white text-center leading-relaxed">
+              {question.answer.display}
+            </p>
+          </div>
+        )}
 
         {/* Explanation */}
         {question.answer.explanation && (
-          <div className="bg-white bg-opacity-10 rounded-2xl p-6 mb-6">
+          <div className="bg-white bg-opacity-10 rounded-2xl p-6">
             <p className="text-xl text-white text-center italic">
               {question.answer.explanation}
             </p>
           </div>
         )}
-
-        {/* Close Button */}
-        <div className="text-center">
-          <button
-            onClick={onClose}
-            className="px-12 py-4 bg-white text-orange-600 font-bold rounded-xl text-2xl hover:bg-gray-100 transition-colors shadow-lg"
-          >
-            Continue
-          </button>
-        </div>
       </div>
 
       <style jsx>{`

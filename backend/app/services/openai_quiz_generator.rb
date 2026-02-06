@@ -23,27 +23,39 @@ class OpenaiQuizGenerator
          - If allowed_types is ["audio", "video"], you MUST NOT use text, multiple_choice, or true_false.
          - Respect this constraint strictly for every question.
 
-      3. DIFFICULTY PROGRESSION:
-         - Round 1: easy difficulty
-         - Round 2: medium difficulty
-         - Round 3: hard difficulty
+      3. QUESTION SPECIFICITY: Questions MUST be specific, clear, and unambiguous.
+         - Use specific names, titles, dates, and details
+         - BAD: "Which song became famous?" 
+         - GOOD: "Which Spice Girls song topped the UK charts in 1996?"
+         - BAD: "What movie is this scene from?"
+         - GOOD: "In which 2010 Christopher Nolan film does this spinning top scene appear?"
+         - Include contextual clues that help identify the answer
+         - Avoid vague terms like "this one", "that thing", "famous", without specifics
+
+      4. DIFFICULTY PROGRESSION:
+         - Round 1: easy difficulty (well-known, mainstream)
+         - Round 2: medium difficulty (somewhat recognizable, requires good knowledge)
+         - Round 3: hard difficulty (obscure, deep cuts, expert level)
          - Every question MUST include: id, type, difficulty (easy|medium|hard), prompt, answer.display.
 
-      4. MEDIA REQUIREMENTS:
+      5. MEDIA REQUIREMENTS:
          - For YouTube: Use ONLY the video_id (11-character YouTube ID from a REAL video)
          - For YouTube: Include start_sec and end_sec as integers (seconds)
          - For images: Use image_url with a complete, REAL URL to an actual accessible image
          - NEVER use placeholder URLs like "example.com" or fake/example video IDs
          - For audio/video questions: NEVER include the song/movie title in the prompt (avoid spoilers)
 
-      5. MULTIPLE CHOICE & TRUE/FALSE:
+      6. MULTIPLE CHOICE & TRUE/FALSE:
          - For multiple_choice: provide 4 choices and correct_choice_index
          - For true_false: choices MUST be ["True","False"] and correct_choice_index must be 0 or 1
+         - All wrong choices should be plausible but clearly incorrect
+         - Avoid "all of the above" or "none of the above" options
 
-      6. CONTENT GUIDELINES:
+      7. CONTENT GUIDELINES:
          - Keep content inclusive and safe for work
          - Avoid politics, religion, sexual content, and personal attacks
-         - Match the provided brainrot level tone
+         - Match the provided brainrot level tone (see brainrot instructions in user prompt)
+         - Low = professional/educational, Medium = casual/friendly, High = internet slang/memes
 
       Return ONLY JSON. No markdown, no extra text.
     PROMPT
@@ -72,7 +84,7 @@ class OpenaiQuizGenerator
   def initialize(params)
     @theme = params[:theme]
     @participants = params[:participants] || []
-    @countries = params[:countries] || []
+    @countries = derive_countries_from_participants(@participants)
     @rounds = params[:rounds] || 3
     @questions_per_round = params[:questions_per_round] || 7
     @brainrot_level = params[:brainrot_level] || 'medium'
@@ -117,6 +129,10 @@ class OpenaiQuizGenerator
 
   private
 
+  def derive_countries_from_participants(participants)
+    participants.map { |p| p['country'] || p[:country] }.compact.uniq
+  end
+
   def build_user_prompt
     audience_stats = Quiz.compute_audience_stats(@participants)
 
@@ -136,12 +152,44 @@ class OpenaiQuizGenerator
       - Brainrot level: #{@brainrot_level}
       - Audience age range: #{audience_stats[:min]}-#{audience_stats[:max]} (avg: #{audience_stats[:avg]})
 
+      BRAINROT LEVEL INSTRUCTIONS:
+      The "brainrot level" controls the tone and presentation style:
+      
+      - LOW (professional): 
+        * Professional, formal language
+        * Educational explanations
+        * Standard quiz format
+        * Example: "Which artist composed the 1997 theme song for Titanic?"
+      
+      - MEDIUM (casual):
+        * Conversational, friendly tone
+        * Fun but clear language
+        * Some personality but not over the top
+        * Example: "Can you name this iconic 90s ballad from Titanic?"
+      
+      - HIGH (maximum brainrot):
+        * Extremely casual, internet slang, memes
+        * Gen-Z language, no cap fr fr
+        * Use terms like: "lowkey", "highkey", "slaps", "banger", "fire", "bussin", "slay"
+        * Exaggerated expressions and reactions
+        * Example: "Yo this song absolutely SLAPS and made everyone cry in theaters ngl, what banger is this fr fr?"
+      
+      Match this tone in ALL prompts and explanations!
+
       THEME REQUIREMENTS:
       - ALL #{@rounds * @questions_per_round} questions must relate directly to: "#{@theme}"
       - Content should be recognizable for people from: #{@countries.join(", ")}
       - If the theme is about music, use audio questions with real song clips
       - If the theme is about movies, use video questions with real movie clips
       - Make questions progressively harder: Round 1 (easy), Round 2 (medium), Round 3 (hard)
+
+      QUESTION SPECIFICITY REQUIREMENTS:
+      - Be SPECIFIC in your questions - include names, titles, dates, context
+      - Avoid vague questions like "What is this?" or "Name this song"
+      - Instead use: "What is the title of this 1997 Titanic theme song?" or "Which artist released 'Wannabe' in 1996?"
+      - For video/audio: Give contextual hints without spoiling (e.g., "This song was featured in the 2003 film Lost in Translation")
+      - For multiple choice: Use specific, distinct options
+      - Make sure the question can only have ONE clear answer
 
       STRICT TYPE CONSTRAINT:
       You may ONLY use these question types: #{@allowed_types.to_json}
@@ -167,7 +215,7 @@ class OpenaiQuizGenerator
           { role: "user", content: user_prompt }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.8
+        temperature: 0.7
       }
     )
 

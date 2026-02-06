@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getQuiz, updateQuiz } from '../services/api';
+import { getQuiz, updateQuiz, regenerateQuiz } from '../services/api';
 
 function EditQuizPage() {
   const { quizId } = useParams();
@@ -9,6 +9,7 @@ function EditQuizPage() {
   const [quizJson, setQuizJson] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -80,6 +81,55 @@ function EditQuizPage() {
     }
   };
 
+  const handleRegenerate = async () => {
+    if (!window.confirm('This will regenerate the entire quiz with the same parameters. Your current edits will be lost. Continue?')) {
+      return;
+    }
+
+    setRegenerating(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      await regenerateQuiz(quizId);
+      
+      // Poll for completion
+      const pollInterval = setInterval(async () => {
+        try {
+          const data = await getQuiz(quizId);
+          if (data.status === 'ready') {
+            clearInterval(pollInterval);
+            setQuiz(data.quiz);
+            setQuizJson(JSON.stringify(data.quiz, null, 2));
+            setRegenerating(false);
+            setSuccess('Quiz regenerated successfully!');
+            setTimeout(() => setSuccess(''), 3000);
+          } else if (data.status === 'failed') {
+            clearInterval(pollInterval);
+            setRegenerating(false);
+            setError(`Regeneration failed: ${data.error_message}`);
+          }
+        } catch (err) {
+          clearInterval(pollInterval);
+          setRegenerating(false);
+          setError('Failed to check regeneration status');
+        }
+      }, 2000);
+      
+      // Timeout after 2 minutes
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        if (regenerating) {
+          setRegenerating(false);
+          setError('Regeneration timed out');
+        }
+      }, 120000);
+    } catch (err) {
+      setRegenerating(false);
+      setError('Failed to start regeneration');
+    }
+  };
+
   const goToPresenter = () => {
     navigate(`/presenter/${quizId}`);
   };
@@ -131,25 +181,47 @@ function EditQuizPage() {
         )}
 
         {/* Action Buttons */}
-        <div className="mb-4 flex gap-3">
+        <div className="mb-4 flex gap-3 justify-between">
+          <div className="flex gap-3">
+            <button
+              onClick={handleSave}
+              disabled={saving || regenerating}
+              className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors"
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+            <button
+              onClick={handleFormat}
+              disabled={regenerating}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold rounded-lg transition-colors"
+            >
+              Format JSON
+            </button>
+            <button
+              onClick={handleReset}
+              disabled={regenerating}
+              className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600 text-white font-bold rounded-lg transition-colors"
+            >
+              Reset to Saved
+            </button>
+          </div>
+          
           <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors"
+            onClick={handleRegenerate}
+            disabled={saving || regenerating}
+            className="px-6 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors"
           >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-          <button
-            onClick={handleFormat}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors"
-          >
-            Format JSON
-          </button>
-          <button
-            onClick={handleReset}
-            className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-lg transition-colors"
-          >
-            Reset to Saved
+            {regenerating ? (
+              <span className="flex items-center">
+                <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Regenerating...
+              </span>
+            ) : (
+              '🔄 Regenerate Entire Quiz'
+            )}
           </button>
         </div>
 

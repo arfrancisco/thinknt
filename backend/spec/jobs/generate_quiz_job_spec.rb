@@ -6,7 +6,6 @@ RSpec.describe GenerateQuizJob, type: :job do
     {
       'theme' => 'Test Theme',
       'participants' => [{ 'name' => 'Alice', 'age' => 30, 'country' => 'US' }],
-      'countries' => ['US'],
       'rounds' => 2,
       'questions_per_round' => 3,
       'brainrot_level' => 'medium',

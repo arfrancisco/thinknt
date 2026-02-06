@@ -108,7 +108,6 @@ module Api
       {
         'theme' => params[:theme].to_s,
         'participants' => (params[:participants] || []).as_json,
-        'countries' => (params[:countries] || []).as_json,
         'rounds' => (params[:rounds] || 3).to_i,
         'questions_per_round' => (params[:questions_per_round] || 7).to_i,
         'brainrot_level' => (params[:brainrot_level] || 'medium').to_s,
