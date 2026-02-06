@@ -15,7 +15,7 @@ function VideoRenderer({ question }) {
     setIsPlaying(false);
     setReplaysLeft(anti_spoiler?.max_replays || 3);
     setTimeLeft(0);
-    
+
     // Stop any playing video from previous question
     if (playerRef.current) {
       try {
@@ -135,8 +135,31 @@ function VideoRenderer({ question }) {
 
   return (
     <div className="text-center py-8">
+      <style>{`
+        .youtube-wrapper {
+          position: relative;
+          width: 854px;
+          height: 480px;
+          margin: 0 auto;
+        }
+        .youtube-wrapper::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 60px;
+          background: #000000;
+          pointer-events: none;
+          z-index: 10;
+        }
+        .youtube-wrapper iframe {
+          position: relative;
+          z-index: 1;
+        }
+      `}</style>
       <div className="mb-6 flex justify-center">
-        <div className="rounded-lg overflow-hidden shadow-2xl">
+        <div className="rounded-lg overflow-hidden shadow-2xl youtube-wrapper">
           <YouTube
             videoId={media.video_id}
             opts={opts}
