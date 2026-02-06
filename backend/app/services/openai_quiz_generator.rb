@@ -76,7 +76,7 @@ class OpenaiQuizGenerator
     @rounds = params[:rounds] || 3
     @questions_per_round = params[:questions_per_round] || 7
     @brainrot_level = params[:brainrot_level] || 'medium'
-    @allowed_types = params[:allowed_types] || ['text', 'audio', 'video', 'image', 'true_false', 'multiple_choice']
+    @allowed_types = params[:allowed_types] || ['text', 'audio', 'video', 'true_false', 'multiple_choice']
     @client = OpenAI::Client.new
     
     begin
@@ -85,14 +85,6 @@ class OpenaiQuizGenerator
     rescue => e
       @youtube_service = nil
       Rails.logger.warn("YouTube service not available: #{e.message}")
-    end
-    
-    begin
-      @wikimedia_service = WikimediaSearchService.new
-      Rails.logger.info("Wikimedia service initialized successfully")
-    rescue => e
-      @wikimedia_service = nil
-      Rails.logger.warn("Wikimedia service not available: #{e.message}")
     end
   end
 
@@ -118,15 +110,6 @@ class OpenaiQuizGenerator
       Rails.logger.info("YouTube enrichment completed")
     else
       Rails.logger.warn("Skipping YouTube enrichment - service not available")
-    end
-    
-    # Enrich image questions with real Wikimedia images
-    if @wikimedia_service
-      Rails.logger.info("Starting Wikimedia enrichment...")
-      enrich_with_wikimedia_search(quiz_data)
-      Rails.logger.info("Wikimedia enrichment completed")
-    else
-      Rails.logger.warn("Skipping Wikimedia enrichment - service not available")
     end
 
     quiz_data
@@ -170,13 +153,6 @@ class OpenaiQuizGenerator
       - Set start_sec to 10 and end_sec to 25 as defaults - we will adjust these automatically
       - DO NOT reveal the answer in the prompt - make them guess from the clip!
       - Make sure the answer.display field contains searchable text (e.g., "Artist - Song Title" or "Movie Title scene")
-
-      For images:
-      - Use REAL Wikimedia Commons URLs: "https://upload.wikimedia.org/wikipedia/commons/..."
-      - Choose iconic images related to "#{@theme}"
-      - DO NOT use placeholder URLs
-      - IMPORTANT: Only use image questions for public domain content (historical figures, landmarks, nature, etc.)
-      - AVOID image questions for copyrighted characters, logos, or modern media (use video/audio instead)
 
       Remember: Theme is "#{@theme}" - EVERY question must be about this topic!
     PROMPT
@@ -275,56 +251,6 @@ class OpenaiQuizGenerator
     end
     
     Rails.logger.info("YouTube enrichment summary: #{enriched_count}/#{total_questions} questions enriched")
-  end
-  
-  def enrich_with_wikimedia_search(quiz_data)
-    total_questions = 0
-    enriched_count = 0
-    
-    quiz_data['rounds']&.each do |round|
-      round['questions']&.each do |question|
-        next unless question['type'] == 'image'
-        next unless question.dig('media', 'provider') == 'static'
-        
-        total_questions += 1
-
-        # Build search query from answer
-        answer_text = question.dig('answer', 'display')
-        unless answer_text
-          Rails.logger.warn("Question #{question['id']} has no answer.display - skipping")
-          next
-        end
-
-        Rails.logger.info("Searching Wikimedia for: #{answer_text}")
-        
-        begin
-          results = @wikimedia_service.smart_search(answer_text, max_results: 3)
-          
-          if results.empty?
-            Rails.logger.warn("No Wikimedia results found for: #{answer_text}")
-            # Use a placeholder image with the answer text
-            question['media']['image_url'] = "https://via.placeholder.com/800x600/4A5568/FFFFFF?text=#{CGI.escape(answer_text)}"
-            Rails.logger.info("Using placeholder for #{question['id']}")
-            next
-          end
-
-          image = results.first
-          
-          # Update the question with actual image URL
-          question['media']['image_url'] = image[:url]
-          
-          enriched_count += 1
-          Rails.logger.info("✓ Enriched #{question['id']}: #{image[:title]} (#{image[:url]})")
-        rescue => e
-          Rails.logger.error("Failed to enrich question #{question['id']}: #{e.class} - #{e.message}")
-          Rails.logger.error(e.backtrace.first(5).join("\n"))
-          # Use placeholder as fallback
-          question['media']['image_url'] = "https://via.placeholder.com/800x600/4A5568/FFFFFF?text=#{CGI.escape(answer_text || 'Image')}"
-        end
-      end
-    end
-    
-    Rails.logger.info("Wikimedia enrichment summary: #{enriched_count}/#{total_questions} questions enriched")
   end
 
   def build_search_query(answer_text, question_type)

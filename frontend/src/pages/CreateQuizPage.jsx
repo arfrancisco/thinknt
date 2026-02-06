@@ -7,7 +7,7 @@ function CreateQuizPage() {
   const [theme, setTheme] = useState('');
   const [participants, setParticipants] = useState([{ name: '', age: '', country: '' }]);
   const [selectedCountries, setSelectedCountries] = useState(['Philippines', 'UK', 'Italy']);
-  const [selectedTypes, setSelectedTypes] = useState(['text', 'audio', 'video', 'image', 'true_false', 'multiple_choice']);
+  const [selectedTypes, setSelectedTypes] = useState(['text', 'audio', 'video', 'true_false', 'multiple_choice']);
   const [rounds, setRounds] = useState(3);
   const [questionsPerRound, setQuestionsPerRound] = useState(7);
   const [brainrotLevel, setBrainrotLevel] = useState('medium');
@@ -15,7 +15,7 @@ function CreateQuizPage() {
   const [error, setError] = useState('');
 
   const availableCountries = ['Philippines', 'UK', 'Italy', 'US', 'Canada', 'Australia', 'Japan', 'Germany', 'France', 'Spain'];
-  const questionTypes = ['text', 'audio', 'video', 'image', 'true_false', 'multiple_choice'];
+  const questionTypes = ['text', 'audio', 'video', 'true_false', 'multiple_choice'];
 
   const addParticipant = () => {
     setParticipants([...participants, { name: '', age: '', country: '' }]);

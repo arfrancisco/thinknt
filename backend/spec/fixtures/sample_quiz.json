@@ -61,20 +61,6 @@
         },
         {
           "id": "q_004",
-          "type": "image",
-          "difficulty": "easy",
-          "prompt": "What is this?",
-          "media": {
-            "provider": "static",
-            "mode": "image",
-            "image_url": "https://example.com/image.jpg"
-          },
-          "answer": {
-            "display": "A cat"
-          }
-        },
-        {
-          "id": "q_005",
           "type": "audio",
           "difficulty": "easy",
           "prompt": "Name this song",
@@ -95,7 +81,7 @@
           }
         },
         {
-          "id": "q_006",
+          "id": "q_005",
           "type": "video",
           "difficulty": "easy",
           "prompt": "Name this movie scene",
