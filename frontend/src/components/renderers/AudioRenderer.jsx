@@ -8,11 +8,39 @@ function AudioRenderer({ question }) {
   const [timeLeft, setTimeLeft] = useState(0);
   const playerRef = useRef(null);
   const timerRef = useRef(null);
+  const timeoutRef = useRef(null);
 
+  // Reset state when question changes
+  useEffect(() => {
+    setIsPlaying(false);
+    setReplaysLeft(anti_spoiler?.max_replays || 3);
+    setTimeLeft(0);
+    
+    // Stop any playing audio from previous question
+    if (playerRef.current) {
+      try {
+        playerRef.current.pauseVideo();
+      } catch (e) {
+        // Ignore errors if player isn't ready
+      }
+    }
+  }, [question.id, anti_spoiler?.max_replays]);
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      if (playerRef.current) {
+        try {
+          playerRef.current.pauseVideo();
+        } catch (e) {
+          // Ignore errors if player isn't ready
+        }
       }
     };
   }, []);
@@ -28,6 +56,14 @@ function AudioRenderer({ question }) {
       const duration = media.end_sec - media.start_sec;
       setTimeLeft(duration);
 
+      // Clear any existing timers
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
       // Start countdown timer
       if (anti_spoiler?.auto_stop) {
         timerRef.current = setInterval(() => {
@@ -42,7 +78,7 @@ function AudioRenderer({ question }) {
       }
 
       // Auto-stop at end_sec
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         if (playerRef.current) {
           playerRef.current.pauseVideo();
         }
@@ -51,6 +87,11 @@ function AudioRenderer({ question }) {
       setIsPlaying(false);
       if (timerRef.current) {
         clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
     }
   };
@@ -70,6 +111,11 @@ function AudioRenderer({ question }) {
     setIsPlaying(false);
     if (timerRef.current) {
       clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
   };
 
