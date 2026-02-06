@@ -190,6 +190,12 @@ function PresenterPage() {
         >
           Edit Quiz JSON
         </button>
+        <button
+          onClick={() => navigate('/')}
+          className="w-full px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
+        >
+          Create New Quiz
+        </button>
       </div>
     </div>
   );
