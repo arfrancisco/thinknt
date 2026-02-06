@@ -1,0 +1,12 @@
+.git
+.env
+.env.local
+db/*.sqlite3
+db/*.sqlite3-*
+log/*
+tmp/*
+storage/*
+node_modules
+.bundle
+vendor/bundle
+spec
