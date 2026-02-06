@@ -4,6 +4,12 @@ class Quiz < ApplicationRecord
   validates :theme, presence: true
   validates :status, presence: true
 
+  # Retry generating this quiz using the saved parameters
+  def retry_generation
+    update!(status: :generating, error_message: nil, quiz_data: nil)
+    GenerateQuizJob.perform_later(id, generation_params)
+  end
+
   # Validate quiz data against JSON Schema
   def validate_quiz_schema
     return false unless quiz_data.present?

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_05_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_06_000001) do
   create_table "quizzes", force: :cascade do |t|
     t.string "theme", null: false
     t.integer "status", default: 0, null: false
@@ -18,6 +18,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_05_000001) do
     t.text "error_message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.json "generation_params"
     t.index ["status"], name: "index_quizzes_on_status"
   end
 

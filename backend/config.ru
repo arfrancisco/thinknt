@@ -1,4 +1,4 @@
-require_relative "boot"
+require_relative "config/boot"
 
 require "rails"
 require "active_model/railtie"

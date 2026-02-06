@@ -26,4 +26,17 @@ RSpec.configure do |config|
 
   # Include ActiveJob test helpers
   config.include ActiveJob::TestHelper, type: :job
+  config.include ActiveJob::TestHelper, type: :request
+  config.include ActiveJob::TestHelper, type: :model
+
+  # Configure ActiveJob to use test adapter
+  config.before(:each) do
+    ActiveJob::Base.queue_adapter = :test
+  end
+
+  # Clear enqueued jobs after each test
+  config.after(:each) do
+    ActiveJob::Base.queue_adapter.enqueued_jobs.clear
+    ActiveJob::Base.queue_adapter.performed_jobs.clear
+  end
 end

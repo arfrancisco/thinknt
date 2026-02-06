@@ -23,6 +23,17 @@ RSpec.describe "API Quizzes", type: :request do
       expect(body["status"]).to eq("generating")
     end
 
+    it "saves generation params to the quiz" do
+      post "/api/quizzes", params: valid_params
+      
+      quiz = Quiz.last
+      expect(quiz.generation_params).to be_present
+      expect(quiz.generation_params['theme']).to eq('Movies')
+      expect(quiz.generation_params['rounds']).to eq(2)
+      expect(quiz.generation_params['questions_per_round']).to eq(5)
+      expect(quiz.generation_params['brainrot_level']).to eq('low')
+    end
+
     it "enqueues a background job" do
       expect {
         post "/api/quizzes", params: valid_params
@@ -53,7 +64,14 @@ RSpec.describe "API Quizzes", type: :request do
     end
 
     context "when quiz is ready" do
-      let(:quiz) { create(:quiz, :ready) }
+      let(:generation_params) do
+        {
+          'theme' => 'Movies',
+          'rounds' => 2,
+          'questions_per_round' => 5
+        }
+      end
+      let(:quiz) { create(:quiz, :ready, generation_params: generation_params) }
       
       it "returns the full quiz data" do
         get "/api/quizzes/#{quiz.id}"
@@ -62,6 +80,15 @@ RSpec.describe "API Quizzes", type: :request do
         body = JSON.parse(response.body)
         expect(body["status"]).to eq("ready")
         expect(body["quiz"]).to include("id", "title", "rounds")
+      end
+
+      it "includes generation params in response" do
+        get "/api/quizzes/#{quiz.id}"
+        
+        body = JSON.parse(response.body)
+        expect(body["generation_params"]).to be_present
+        expect(body["generation_params"]["theme"]).to eq("Movies")
+        expect(body["generation_params"]["rounds"]).to eq(2)
       end
     end
 
@@ -90,18 +117,35 @@ RSpec.describe "API Quizzes", type: :request do
   end
 
   describe "POST /api/quizzes/:id/regenerate" do
-    let(:quiz) { create(:quiz, :ready) }
-
-    it "returns 501 not implemented" do
-      post "/api/quizzes/#{quiz.id}/regenerate", params: {
-        scope: "question",
-        question_id: "q_001",
-        notes: "Make it harder"
+    let(:generation_params) do
+      {
+        'theme' => 'Movies',
+        'participants' => [{ 'name' => 'Bob', 'age' => 35, 'country' => 'UK' }],
+        'countries' => ['UK'],
+        'rounds' => 2,
+        'questions_per_round' => 5,
+        'brainrot_level' => 'low',
+        'allowed_types' => ['text', 'multiple_choice']
       }
+    end
+    let(:quiz) { create(:quiz, :failed, generation_params: generation_params) }
+
+    it "resets quiz status and enqueues regeneration job" do
+      expect {
+        post "/api/quizzes/#{quiz.id}/regenerate"
+      }.to have_enqueued_job(GenerateQuizJob).with(quiz.id, generation_params)
       
-      expect(response).to have_http_status(:not_implemented)
+      expect(response).to have_http_status(:ok)
       body = JSON.parse(response.body)
-      expect(body["error"]).to eq("Not implemented yet")
+      expect(body["status"]).to eq("generating")
+    end
+
+    it "returns 404 for non-existent quiz" do
+      post "/api/quizzes/99999/regenerate"
+      
+      expect(response).to have_http_status(:not_found)
+      body = JSON.parse(response.body)
+      expect(body["error"]).to eq("Quiz not found")
     end
   end
 end

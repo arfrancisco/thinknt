@@ -112,4 +112,26 @@ RSpec.describe Quiz, type: :model do
       expect(stats[:avg]).to eq(30.0)
     end
   end
+
+  describe '#retry_generation' do
+    let(:generation_params) do
+      {
+        'theme' => 'Movies',
+        'rounds' => 2,
+        'questions_per_round' => 5
+      }
+    end
+    let(:quiz) { create(:quiz, :failed, generation_params: generation_params) }
+
+    it 'resets quiz status and enqueues job' do
+      expect {
+        quiz.retry_generation
+      }.to have_enqueued_job(GenerateQuizJob).with(quiz.id, generation_params)
+      
+      quiz.reload
+      expect(quiz.generating?).to be true
+      expect(quiz.error_message).to be_nil
+      expect(quiz.quiz_data).to be_nil
+    end
+  end
 end

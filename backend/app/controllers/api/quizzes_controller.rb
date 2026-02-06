@@ -1,11 +1,16 @@
 module Api
   class QuizzesController < ApplicationController
     def create
-      quiz = Quiz.new(theme: quiz_params[:theme], status: :generating)
+      params_for_generation = generation_params
+      quiz = Quiz.new(
+        theme: quiz_params[:theme], 
+        status: :generating,
+        generation_params: params_for_generation
+      )
       
       if quiz.save
         # Enqueue background job to generate quiz
-        GenerateQuizJob.perform_later(quiz.id, generation_params)
+        GenerateQuizJob.perform_later(quiz.id, params_for_generation)
         
         render json: {
           quiz_id: quiz.id,
@@ -22,7 +27,8 @@ module Api
       response = {
         id: quiz.id,
         status: quiz.status,
-        theme: quiz.theme
+        theme: quiz.theme,
+        generation_params: quiz.generation_params
       }
       
       case quiz.status
@@ -38,8 +44,20 @@ module Api
     end
 
     def regenerate
-      # Stub for M3 milestone
-      render json: { error: 'Not implemented yet' }, status: :not_implemented
+      quiz = Quiz.find(params[:id])
+      
+      # Reset quiz status to generating
+      quiz.update!(status: :generating, error_message: nil, quiz_data: nil)
+      
+      # Use the saved generation params to regenerate
+      GenerateQuizJob.perform_later(quiz.id, quiz.generation_params)
+      
+      render json: {
+        quiz_id: quiz.id,
+        status: quiz.status
+      }
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: 'Quiz not found' }, status: :not_found
     end
 
     private
