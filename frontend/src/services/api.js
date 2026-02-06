@@ -35,8 +35,9 @@ export const updateQuiz = async (quizId, quizData) => {
   return response.data;
 };
 
-export const regenerateQuiz = async (quizId) => {
-  const response = await api.post(`/quizzes/${quizId}/regenerate`);
+export const regenerateQuiz = async (quizId, newParams = null) => {
+  const payload = newParams ? { generation_params: newParams } : {};
+  const response = await api.post(`/quizzes/${quizId}/regenerate`, payload);
   return response.data;
 };
 

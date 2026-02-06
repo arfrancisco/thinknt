@@ -46,11 +46,30 @@ module Api
     def regenerate
       quiz = Quiz.find(params[:id])
       
-      # Reset quiz status to generating
-      quiz.update!(status: :generating, error_message: nil, quiz_data: nil)
+      # Check if new generation params are provided
+      new_params = params[:generation_params]
       
-      # Use the saved generation params to regenerate
-      GenerateQuizJob.perform_later(quiz.id, quiz.generation_params)
+      if new_params.present?
+        # Use new generation params
+        generation_params_to_use = {
+          'theme' => new_params[:theme] || quiz.generation_params['theme'],
+          'participants' => new_params[:participants] || quiz.generation_params['participants'],
+          'rounds' => new_params[:rounds] || quiz.generation_params['rounds'],
+          'questions_per_round' => new_params[:questions_per_round] || quiz.generation_params['questions_per_round'],
+          'brainrot_level' => new_params[:brainrot_level] || quiz.generation_params['brainrot_level'],
+          'allowed_types' => new_params[:allowed_types] || quiz.generation_params['allowed_types']
+        }
+        
+        # Update stored generation params
+        quiz.update!(generation_params: generation_params_to_use, status: :generating, error_message: nil, quiz_data: nil)
+      else
+        # Use existing generation params
+        quiz.update!(status: :generating, error_message: nil, quiz_data: nil)
+        generation_params_to_use = quiz.generation_params
+      end
+      
+      # Enqueue regeneration job with appropriate params
+      GenerateQuizJob.perform_later(quiz.id, generation_params_to_use)
       
       render json: {
         quiz_id: quiz.id,

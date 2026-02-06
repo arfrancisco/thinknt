@@ -17,6 +17,7 @@ function PresenterPage() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [showRoundTransition, setShowRoundTransition] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
+  const [showKeyboardHints, setShowKeyboardHints] = useState(false);
 
   useEffect(() => {
     loadQuiz();
@@ -244,22 +245,44 @@ function PresenterPage() {
         />
       )}
 
-      {/* Keyboard Hints */}
-      <div className="fixed bottom-24 right-4 bg-black bg-opacity-70 px-4 py-2 rounded text-sm space-y-1">
-        <div>← Arrow: Previous</div>
-        <div>→ Arrow: Next</div>
-        <button
-          onClick={() => navigate(`/edit/${quizId}`)}
-          className="mt-2 w-full px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
-        >
-          Edit Quiz JSON
-        </button>
-        <button
-          onClick={() => navigate('/')}
-          className="w-full px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
-        >
-          Create New Quiz
-        </button>
+      {/* Keyboard Hints - Collapsible */}
+      <div className="fixed bottom-24 right-4">
+        {showKeyboardHints ? (
+          <div className="bg-black bg-opacity-70 px-4 py-2 rounded text-sm space-y-1">
+            <div className="flex justify-between items-center mb-2">
+              <span className="font-bold text-xs text-gray-300">KEYBOARD SHORTCUTS</span>
+              <button
+                onClick={() => setShowKeyboardHints(false)}
+                className="text-gray-400 hover:text-white ml-2"
+                title="Hide hints"
+              >
+                ✕
+              </button>
+            </div>
+            <div>← Arrow: Previous</div>
+            <div>→ Arrow: Next</div>
+            <button
+              onClick={() => navigate(`/edit/${quizId}`)}
+              className="mt-2 w-full px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
+            >
+              Edit Quiz JSON
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
+            >
+              Create New Quiz
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowKeyboardHints(true)}
+            className="bg-black bg-opacity-70 hover:bg-opacity-90 px-4 py-2 rounded text-sm text-gray-300 hover:text-white transition-all"
+            title="Show keyboard shortcuts"
+          >
+            ⌨️ Shortcuts
+          </button>
+        )}
       </div>
     </div>
   );
