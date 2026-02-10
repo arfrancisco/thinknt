@@ -9,7 +9,7 @@ FactoryBot.define do
         'rounds' => 3,
         'questions_per_round' => 7,
         'brainrot_level' => 'medium',
-        'allowed_types' => ['audio', 'video', 'image', 'true_false', 'multiple_choice']
+        'allowed_types' => ['audio', 'video', 'true_false', 'multiple_choice']
       }
     end
 

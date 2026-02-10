@@ -63,20 +63,19 @@
       "required": ["id", "type", "prompt", "answer", "difficulty"],
       "properties": {
         "id": { "type": "string" },
-        "type": { "type": "string", "enum": ["audio", "video", "image", "true_false", "multiple_choice"] },
+        "type": { "type": "string", "enum": ["audio", "video", "true_false", "multiple_choice"] },
         "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
         "prompt": { "type": "string" },
         "instructions": { "type": "string" },
         "media": {
           "type": "object",
-          "description": "Only for audio/video/image",
+          "description": "Only for audio/video",
           "properties": {
             "provider": { "type": "string", "enum": ["youtube", "static"] },
-            "mode": { "type": "string", "enum": ["audio", "video", "image"] },
+            "mode": { "type": "string", "enum": ["audio", "video"] },
             "video_id": { "type": "string" },
             "start_sec": { "type": "integer", "minimum": 0 },
-            "end_sec": { "type": "integer", "minimum": 1 },
-            "image_url": { "type": "string" }
+            "end_sec": { "type": "integer", "minimum": 1 }
           }
         },
         "choices": { "type": "array", "minItems": 2, "maxItems": 6, "items": { "type": "string" } },
@@ -94,7 +93,7 @@
       "allOf": [
         { "if": { "properties": { "type": { "const": "multiple_choice" } } }, "then": { "required": ["choices", "correct_choice_index"] } },
         { "if": { "properties": { "type": { "const": "true_false" } } }, "then": { "properties": { "choices": { "const": ["True","False"] }, "correct_choice_index": { "enum": [0, 1] } } } },
-        { "if": { "properties": { "type": { "enum": ["audio","video","image"] } } }, "then": { "required": ["media"] } }
+        { "if": { "properties": { "type": { "enum": ["audio","video"] } } }, "then": { "required": ["media"] } }
       ]
     }
   }

@@ -1,6 +1,5 @@
 import AudioRenderer from './renderers/AudioRenderer';
 import VideoRenderer from './renderers/VideoRenderer';
-import ImageRenderer from './renderers/ImageRenderer';
 import TrueFalseRenderer from './renderers/TrueFalseRenderer';
 import MultipleChoiceRenderer from './renderers/MultipleChoiceRenderer';
 
@@ -11,8 +10,6 @@ function QuestionFrame({ question }) {
         return <AudioRenderer question={question} />;
       case 'video':
         return <VideoRenderer question={question} />;
-      case 'image':
-        return <ImageRenderer question={question} />;
       case 'true_false':
         return <TrueFalseRenderer question={question} />;
       case 'multiple_choice':

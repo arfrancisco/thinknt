@@ -20,7 +20,7 @@ class OpenaiQuizGenerator
          - Do NOT include generic trivia questions unrelated to the theme.
 
       2. QUESTION TYPES: Use ONLY the question types listed in "allowed_types".
-         - If allowed_types is ["audio", "video"], you MUST NOT use image, multiple_choice, or true_false.
+         - If allowed_types is ["audio", "video"], you MUST NOT use multiple_choice or true_false.
          - Respect this constraint strictly for every question.
 
       3. QUESTION SPECIFICITY: Questions MUST be specific, clear, and unambiguous.
@@ -41,7 +41,6 @@ class OpenaiQuizGenerator
       5. MEDIA REQUIREMENTS:
          - For YouTube: Use ONLY the video_id (11-character YouTube ID from a REAL video)
          - For YouTube: Include start_sec and end_sec as integers (seconds)
-         - For images: Use image_url with a complete, REAL URL to an actual accessible image
          - NEVER use placeholder URLs like "example.com" or fake/example video IDs
          - For audio/video questions: NEVER include the song/movie title in the prompt (avoid spoilers)
 
@@ -112,7 +111,7 @@ class OpenaiQuizGenerator
     @rounds = params[:rounds] || 3
     @questions_per_round = params[:questions_per_round] || 7
     @brainrot_level = params[:brainrot_level] || 'medium'
-    @allowed_types = params[:allowed_types] || ['audio', 'video', 'image', 'true_false', 'multiple_choice']
+    @allowed_types = params[:allowed_types] || ['audio', 'video', 'true_false', 'multiple_choice']
     @client = OpenAI::Client.new
 
     begin
@@ -235,8 +234,8 @@ class OpenaiQuizGenerator
       ✓ ALLOWED: ONLY the types listed above
       
       Examples:
-      - If allowed_types = ["video", "audio"], you CANNOT use "image", "multiple_choice", or "true_false"
-      - If allowed_types = ["multiple_choice"], you CANNOT use "image", "video", "audio", or "true_false"
+      - If allowed_types = ["video", "audio"], you CANNOT use "multiple_choice" or "true_false"
+      - If allowed_types = ["multiple_choice"], you CANNOT use "video", "audio", or "true_false"
       
       EVERY SINGLE QUESTION must have a type from: #{@allowed_types.to_json}
       

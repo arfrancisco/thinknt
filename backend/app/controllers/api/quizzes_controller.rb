@@ -137,7 +137,7 @@ module Api
         'rounds' => (params[:rounds] || 3).to_i,
         'questions_per_round' => (params[:questions_per_round] || 7).to_i,
         'brainrot_level' => (params[:brainrot_level] || 'medium').to_s,
-        'allowed_types' => (params[:allowed_types] || ['audio', 'video', 'image', 'true_false', 'multiple_choice']).as_json
+        'allowed_types' => (params[:allowed_types] || ['audio', 'video', 'true_false', 'multiple_choice']).as_json
       }
     end
   end

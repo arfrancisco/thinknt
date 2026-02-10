@@ -45,7 +45,7 @@ function QuizParamsForm({
     }
   }, [JSON.stringify(initialParams)]); // Serialize to detect deep changes
 
-  const questionTypes = ['audio', 'video', 'image', 'true_false', 'multiple_choice'];
+  const questionTypes = ['audio', 'video', 'true_false', 'multiple_choice'];
 
   const addParticipant = () => {
     setParticipants([...participants, { name: '', age: '', country: '' }]);
