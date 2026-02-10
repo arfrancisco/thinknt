@@ -45,13 +45,37 @@ class OpenaiQuizGenerator
          - NEVER use placeholder URLs like "example.com" or fake/example video IDs
          - For audio/video questions: NEVER include the song/movie title in the prompt (avoid spoilers)
 
-      6. MULTIPLE CHOICE & TRUE/FALSE:
+      6. PERSONALITY & ENGAGEMENT:
+         - Write like an enthusiastic quiz host who LOVES this topic
+         - Use vivid, engaging language that makes people excited to answer
+         - Use the 'instructions' field creatively to add flavor, hints, or commentary
+         - Think "fun trivia night at a bar" not "boring school test"
+         - Examples of engaging prompts:
+           * ❌ BORING: "What is the name of this song?"
+           * ✅ ENGAGING: "This absolute earworm dominated radio for 12 weeks straight - what's the title?"
+           * ❌ BORING: "Which movie is this scene from?"
+           * ✅ ENGAGING: "This iconic moment had everyone quoting it for MONTHS - which film is it?"
+         - Use the 'instructions' field for extra personality:
+           * "Close your eyes and let the nostalgia hit"
+           * "Everyone and their mom knows this one"
+           * "If you don't know this, we can't be friends (jk... maybe)"
+
+      7. MULTIPLE CHOICE & TRUE/FALSE:
          - For multiple_choice: provide 4 choices and correct_choice_index
          - For true_false: choices MUST be ["True","False"] and correct_choice_index must be 0 or 1
-         - All wrong choices should be plausible but clearly incorrect
+         - WRONG ANSWERS SHOULD BE ENTERTAINING:
+           * Mix plausible options with funny-but-clearly-wrong options
+           * Use similar names/titles from the same era or genre
+           * Add one absurd option for comic relief (but keep it theme-appropriate)
+           * Examples for "Wonderwall by Oasis":
+             - "Champagne Supernova by Oasis" (same artist, plausible)
+             - "Wonderboy by Tenacious D" (similar name, different vibe)
+             - "The Wall by Pink Floyd" (plays on 'wall')
+             - "Wonderwall by Nickelback" (wrong artist, funny)
+         - Balance: 1-2 plausible distractors + 1 funny option
          - Avoid "all of the above" or "none of the above" options
 
-      7. CONTENT GUIDELINES:
+      8. CONTENT GUIDELINES:
          - Keep content inclusive and safe for work
          - Avoid politics, religion, sexual content, and personal attacks
          - Match the provided brainrot level tone (see brainrot instructions in user prompt)
@@ -158,26 +182,33 @@ class OpenaiQuizGenerator
       BRAINROT LEVEL INSTRUCTIONS:
       The "brainrot level" controls the tone and presentation style:
 
-      - LOW (professional):
-        * Professional, formal language
-        * Educational explanations
-        * Standard quiz format
-        * Example: "Which artist composed the 1997 theme song for Titanic?"
+      - LOW (professional but engaging):
+        * Professional, formal language but still enthusiastic
+        * Educational explanations with interesting facts
+        * Engaging quiz host tone
+        * Prompt example: "Which artist composed the 1997 theme song that became synonymous with Titanic?"
+        * Instructions example: "This chart-topper defined an era"
+        * Explanation example: "Celine Dion's performance earned her an Academy Award"
 
-      - MEDIUM (casual):
-        * Conversational, friendly tone
+      - MEDIUM (casual and fun):
+        * Conversational, friendly tone with personality
         * Fun but clear language
-        * Some personality but not over the top
-        * Example: "Can you name this iconic 90s ballad from Titanic?"
+        * Pop culture references and playful commentary
+        * Prompt example: "Everyone knows this iconic 90s ballad that made Titanic even MORE emotional - what's it called?"
+        * Instructions example: "Trust me, you've heard this at every wedding"
+        * Explanation example: "This song was EVERYWHERE in 1997 and we're not mad about it"
+        * Wrong answer example for MC: Mix in era-appropriate songs + one funny option
 
       - HIGH (maximum brainrot):
-        * Extremely casual, internet slang, memes
-        * Gen-Z language, no cap fr fr
-        * Use terms like: "lowkey", "highkey", "slaps", "banger", "fire", "bussin", "slay"
+        * Extremely casual, internet slang, memes, maximum chaos
+        * Gen-Z language with terms like: "lowkey", "highkey", "slaps", "banger", "fire", "bussin", "slay", "no cap", "fr fr", "ngl"
         * Exaggerated expressions and reactions
-        * Example: "Yo this song absolutely SLAPS and made everyone cry in theaters ngl, what banger is this fr fr?"
+        * Prompt example: "Yo this song absolutely SLAPS and had everyone in their feelings at the theater ngl, what banger is this bestie?"
+        * Instructions example: "If you miss this one that's an L fr fr"
+        * Explanation example: "Celine Dion really said 'let me make everyone cry' and she ATE"
+        * Wrong answer example for MC: Include meme answers like "Darude - Sandstorm" mixed with plausible options
 
-      Match this tone in ALL prompts and explanations!
+      Match this tone in ALL prompts, instructions, explanations, and even wrong answers!
 
       THEME REQUIREMENTS:
       - ALL #{@rounds * @questions_per_round} questions must relate directly to: "#{@theme}"
@@ -231,7 +262,7 @@ class OpenaiQuizGenerator
           { role: "user", content: user_prompt }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.7
+        temperature: 0.75
       }
     )
 
