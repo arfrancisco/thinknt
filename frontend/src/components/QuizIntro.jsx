@@ -22,7 +22,7 @@ function QuizIntro({ quiz, onStart }) {
               {quiz.rounds.length} Rounds • {quiz.rounds.reduce((sum, r) => sum + r.questions.length, 0)} Questions
             </p>
           </div>
-          
+
           {/* Round Preview */}
           <div className="flex justify-center gap-4 mt-6">
             {quiz.rounds.map((round, idx) => (

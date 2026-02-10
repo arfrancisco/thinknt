@@ -30,11 +30,11 @@ function AnswerReveal({ question, onClose }) {
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl p-12 max-w-4xl w-full mx-4 shadow-2xl transform animate-slideUp relative"
         onClick={(e) => e.stopPropagation()}
       >

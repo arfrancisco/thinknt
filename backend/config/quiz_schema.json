@@ -63,7 +63,7 @@
       "required": ["id", "type", "prompt", "answer", "difficulty"],
       "properties": {
         "id": { "type": "string" },
-        "type": { "type": "string", "enum": ["text", "audio", "video", "image", "true_false", "multiple_choice"] },
+        "type": { "type": "string", "enum": ["audio", "video", "image", "true_false", "multiple_choice"] },
         "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
         "prompt": { "type": "string" },
         "instructions": { "type": "string" },

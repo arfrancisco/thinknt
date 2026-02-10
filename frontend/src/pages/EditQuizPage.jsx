@@ -48,12 +48,12 @@ function EditQuizPage() {
     try {
       // Validate JSON
       const parsedQuiz = JSON.parse(quizJson);
-      
+
       // Save to backend
       const response = await updateQuiz(quizId, parsedQuiz);
       setQuiz(response.quiz);
       setSuccess('Quiz saved successfully!');
-      
+
       // Auto-hide success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -116,11 +116,15 @@ function EditQuizPage() {
     setSuccess('');
 
     try {
-      await regenerateQuiz(quizId, params);
+      console.log('Sending new params to regenerate:', params);
+      const response = await regenerateQuiz(quizId, params);
+      console.log('Regenerate response:', response);
       pollForCompletion();
     } catch (err) {
+      console.error('Regeneration error:', err);
+      console.error('Error response:', err.response?.data);
       setRegenerating(false);
-      setError('Failed to start regeneration with new parameters');
+      setError(err.response?.data?.error || 'Failed to start regeneration with new parameters');
     }
   };
 
@@ -147,7 +151,7 @@ function EditQuizPage() {
         setError('Failed to check regeneration status');
       }
     }, 2000);
-    
+
     // Timeout after 2 minutes
     setTimeout(() => {
       clearInterval(pollInterval);
@@ -233,10 +237,12 @@ function EditQuizPage() {
             <p className="text-green-300">{success}</p>
           </div>
         )}
-        
+
         {error && (
           <div className="mb-4 p-4 bg-red-600 bg-opacity-20 border border-red-500 rounded-lg">
+            <p className="text-red-300 font-bold mb-1">Error:</p>
             <p className="text-red-300 whitespace-pre-wrap">{error}</p>
+            <p className="text-red-200 text-sm mt-2">Check the browser console (F12) for more details.</p>
           </div>
         )}
 
@@ -268,7 +274,7 @@ function EditQuizPage() {
                   Reset to Saved
                 </button>
               </div>
-              
+
               <button
                 onClick={handleRegenerate}
                 disabled={saving || regenerating}
@@ -320,7 +326,7 @@ function EditQuizPage() {
                   Modify the generation parameters below and regenerate the quiz. This will replace your current quiz.
                 </p>
               </div>
-              
+
               <QuizParamsForm
                 initialParams={generationParams}
                 onSubmit={handleRegenerateWithNewParams}

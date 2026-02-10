@@ -28,16 +28,6 @@
       "difficulty": "easy",
       "questions": [
         {
-          "id": "q_001",
-          "type": "text",
-          "difficulty": "easy",
-          "prompt": "What is 2+2?",
-          "answer": {
-            "display": "4",
-            "explanation": "Basic arithmetic"
-          }
-        },
-        {
           "id": "q_002",
           "type": "true_false",
           "difficulty": "easy",

@@ -20,12 +20,12 @@ class OpenaiQuizGenerator
          - Do NOT include generic trivia questions unrelated to the theme.
 
       2. QUESTION TYPES: Use ONLY the question types listed in "allowed_types".
-         - If allowed_types is ["audio", "video"], you MUST NOT use text, multiple_choice, or true_false.
+         - If allowed_types is ["audio", "video"], you MUST NOT use image, multiple_choice, or true_false.
          - Respect this constraint strictly for every question.
 
       3. QUESTION SPECIFICITY: Questions MUST be specific, clear, and unambiguous.
          - Use specific names, titles, dates, and details
-         - BAD: "Which song became famous?" 
+         - BAD: "Which song became famous?"
          - GOOD: "Which Spice Girls song topped the UK charts in 1996?"
          - BAD: "What movie is this scene from?"
          - GOOD: "In which 2010 Christopher Nolan film does this spinning top scene appear?"
@@ -88,9 +88,9 @@ class OpenaiQuizGenerator
     @rounds = params[:rounds] || 3
     @questions_per_round = params[:questions_per_round] || 7
     @brainrot_level = params[:brainrot_level] || 'medium'
-    @allowed_types = params[:allowed_types] || ['text', 'audio', 'video', 'true_false', 'multiple_choice']
+    @allowed_types = params[:allowed_types] || ['audio', 'video', 'image', 'true_false', 'multiple_choice']
     @client = OpenAI::Client.new
-    
+
     begin
       @youtube_service = YoutubeSearchService.new
       Rails.logger.info("YouTube service initialized successfully")
@@ -114,6 +114,9 @@ class OpenaiQuizGenerator
 
       raise GenerationError, "Failed to generate valid quiz after repair attempt" unless quiz_data
     end
+
+    # Enforce allowed_types by filtering out disallowed questions
+    filter_disallowed_question_types(quiz_data)
 
     # Enrich video/audio questions with real YouTube searches
     if @youtube_service
@@ -154,26 +157,26 @@ class OpenaiQuizGenerator
 
       BRAINROT LEVEL INSTRUCTIONS:
       The "brainrot level" controls the tone and presentation style:
-      
-      - LOW (professional): 
+
+      - LOW (professional):
         * Professional, formal language
         * Educational explanations
         * Standard quiz format
         * Example: "Which artist composed the 1997 theme song for Titanic?"
-      
+
       - MEDIUM (casual):
         * Conversational, friendly tone
         * Fun but clear language
         * Some personality but not over the top
         * Example: "Can you name this iconic 90s ballad from Titanic?"
-      
+
       - HIGH (maximum brainrot):
         * Extremely casual, internet slang, memes
         * Gen-Z language, no cap fr fr
         * Use terms like: "lowkey", "highkey", "slaps", "banger", "fire", "bussin", "slay"
         * Exaggerated expressions and reactions
         * Example: "Yo this song absolutely SLAPS and made everyone cry in theaters ngl, what banger is this fr fr?"
-      
+
       Match this tone in ALL prompts and explanations!
 
       THEME REQUIREMENTS:
@@ -191,9 +194,22 @@ class OpenaiQuizGenerator
       - For multiple choice: Use specific, distinct options
       - Make sure the question can only have ONE clear answer
 
-      STRICT TYPE CONSTRAINT:
-      You may ONLY use these question types: #{@allowed_types.to_json}
-      Do NOT use any other question types!
+      ⚠️ CRITICAL STRICT TYPE CONSTRAINT - READ THIS CAREFULLY ⚠️
+      
+      ALLOWED TYPES: #{@allowed_types.to_json}
+      
+      YOU MUST ONLY USE THESE TYPES. DO NOT USE ANY OTHER TYPES.
+      
+      ❌ FORBIDDEN: Any question type NOT in the list above
+      ✓ ALLOWED: ONLY the types listed above
+      
+      Examples:
+      - If allowed_types = ["video", "audio"], you CANNOT use "image", "multiple_choice", or "true_false"
+      - If allowed_types = ["multiple_choice"], you CANNOT use "image", "video", "audio", or "true_false"
+      
+      EVERY SINGLE QUESTION must have a type from: #{@allowed_types.to_json}
+      
+      This is NON-NEGOTIABLE. Questions with disallowed types WILL BE REJECTED.
 
       MEDIA INSTRUCTIONS:
       For YouTube videos/audio:
@@ -254,12 +270,12 @@ class OpenaiQuizGenerator
   def enrich_with_youtube_search(quiz_data)
     total_questions = 0
     enriched_count = 0
-    
+
     quiz_data['rounds']&.each do |round|
       round['questions']&.each do |question|
         next unless ['audio', 'video'].include?(question['type'])
         next unless question.dig('media', 'provider') == 'youtube'
-        
+
         total_questions += 1
 
         # Build search query from answer
@@ -270,11 +286,11 @@ class OpenaiQuizGenerator
         end
 
         Rails.logger.info("Searching YouTube for: #{answer_text} (type: #{question['type']})")
-        
+
         begin
           # Use smart search for better results
           results = @youtube_service.smart_search(answer_text, type: question['type'], max_results: 3)
-          
+
           if results.empty?
             Rails.logger.warn("No YouTube results found for: #{answer_text}")
             next
@@ -282,12 +298,12 @@ class OpenaiQuizGenerator
 
           video = results.first
           duration = video[:duration_seconds] || 300
-          
+
           # Update the question with actual video ID and reasonable time range
           question['media']['video_id'] = video[:video_id]
           question['media']['start_sec'] = calculate_start_time(duration)
           question['media']['end_sec'] = calculate_end_time(duration, question['media']['start_sec'])
-          
+
           enriched_count += 1
           Rails.logger.info("✓ Enriched #{question['id']}: #{video[:title]} (#{video[:video_id]})")
         rescue => e
@@ -297,7 +313,7 @@ class OpenaiQuizGenerator
         end
       end
     end
-    
+
     Rails.logger.info("YouTube enrichment summary: #{enriched_count}/#{total_questions} questions enriched")
   end
 
@@ -323,5 +339,35 @@ class OpenaiQuizGenerator
     clip_length = rand(10..15)
     end_time = start_sec + clip_length
     [end_time, duration - 1].min
+  end
+
+  def filter_disallowed_question_types(quiz_data)
+    return unless quiz_data['rounds']
+
+    removed_count = 0
+    quiz_data['rounds'].each do |round|
+      next unless round['questions']
+      
+      original_count = round['questions'].size
+      round['questions'].select! do |question|
+        allowed = @allowed_types.include?(question['type'])
+        unless allowed
+          Rails.logger.warn("Removing disallowed question type '#{question['type']}' - only #{@allowed_types} allowed")
+          removed_count += 1
+        end
+        allowed
+      end
+      
+      # Log if questions were removed from this round
+      new_count = round['questions'].size
+      if new_count < original_count
+        Rails.logger.warn("Round '#{round['name']}': removed #{original_count - new_count} questions (#{original_count} -> #{new_count})")
+      end
+    end
+
+    if removed_count > 0
+      Rails.logger.warn("Total questions removed due to type constraints: #{removed_count}")
+      Rails.logger.warn("Allowed types were: #{@allowed_types}")
+    end
   end
 end

@@ -57,7 +57,7 @@ RSpec.describe YoutubeSearchService do
 
     it 'returns search results with video details' do
       results = service.search('test query')
-      
+
       expect(results).to be_an(Array)
       expect(results.first[:video_id]).to eq('abc123')
       expect(results.first[:title]).to eq('Test Video')
@@ -85,17 +85,17 @@ RSpec.describe YoutubeSearchService do
     it 'tries official music video first' do
       expect(service).to receive(:search).with('My Song official music video', max_results: 5, video_category: '10')
         .and_return([{ video_id: 'abc123', title: 'My Song - Official' }])
-      
+
       results = service.search_music('My Song')
       expect(results.first[:video_id]).to eq('abc123')
     end
-    
+
     it 'falls back to official audio if music video returns empty' do
       expect(service).to receive(:search).with('My Song official music video', max_results: 5, video_category: '10')
         .and_return([])
       expect(service).to receive(:search).with('My Song official audio', max_results: 5, video_category: '10')
         .and_return([{ video_id: 'def456', title: 'My Song - Audio' }])
-      
+
       results = service.search_music('My Song')
       expect(results.first[:video_id]).to eq('def456')
     end
@@ -107,32 +107,32 @@ RSpec.describe YoutubeSearchService do
       service.search_movie_clip('Inception')
     end
   end
-  
+
   describe '#smart_search' do
     it 'finds results with official in title for audio' do
       official_video = { video_id: 'abc123', title: 'Artist - Song [Official Music Video]' }
       unofficial_video = { video_id: 'def456', title: 'Artist - Song (Cover)' }
-      
+
       expect(service).to receive(:search).with('My Song official music video', max_results: 3, video_category: '10')
         .and_return([official_video, unofficial_video])
-      
+
       results = service.smart_search('My Song', type: 'audio')
       expect(results.first[:video_id]).to eq('abc123')
     end
-    
+
     it 'tries multiple keywords until results found' do
       expect(service).to receive(:search).with('My Song official video', max_results: 3, video_category: nil)
         .and_return([])
       expect(service).to receive(:search).with('My Song official music video', max_results: 3, video_category: nil)
         .and_return([{ video_id: 'abc123', title: 'My Song' }])
-      
+
       results = service.smart_search('My Song', type: 'video')
       expect(results.first[:video_id]).to eq('abc123')
     end
-    
+
     it 'returns empty array when no results found' do
       allow(service).to receive(:search).and_return([])
-      
+
       results = service.smart_search('Nonexistent Song', type: 'audio')
       expect(results).to eq([])
     end

@@ -1,4 +1,3 @@
-import TextRenderer from './renderers/TextRenderer';
 import AudioRenderer from './renderers/AudioRenderer';
 import VideoRenderer from './renderers/VideoRenderer';
 import ImageRenderer from './renderers/ImageRenderer';
@@ -8,8 +7,6 @@ import MultipleChoiceRenderer from './renderers/MultipleChoiceRenderer';
 function QuestionFrame({ question }) {
   const renderContent = () => {
     switch (question.type) {
-      case 'text':
-        return <TextRenderer question={question} />;
       case 'audio':
         return <AudioRenderer question={question} />;
       case 'video':

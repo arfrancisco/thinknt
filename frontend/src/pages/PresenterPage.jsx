@@ -67,7 +67,7 @@ function PresenterPage() {
     if (!quiz) return;
 
     const currentRound = quiz.rounds[currentRoundIndex];
-    
+
     if (showAnswer) {
       setShowAnswer(false);
       return;
@@ -137,7 +137,7 @@ function PresenterPage() {
     .slice(0, currentRoundIndex)
     .reduce((sum, round) => sum + round.questions.length, 0) + currentQuestionIndex + 1;
 
-  const isLastQuestion = currentRoundIndex === quiz.rounds.length - 1 && 
+  const isLastQuestion = currentRoundIndex === quiz.rounds.length - 1 &&
                          currentQuestionIndex === currentRound.questions.length - 1;
 
   // Show intro first
@@ -159,25 +159,25 @@ function PresenterPage() {
             Question {currentQuestionNumber} / {totalQuestions}
           </div>
         </div>
-        
+
         {/* Progress Bar */}
         <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
-          <div 
+          <div
             className="bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 h-full transition-all duration-500 ease-out"
             style={{ width: `${(currentQuestionNumber / totalQuestions) * 100}%` }}
           ></div>
         </div>
-        
+
         {/* Round Progress Dots */}
         <div className="flex justify-center gap-2 mt-3">
           {quiz.rounds.map((round, idx) => (
             <div key={idx} className="flex items-center">
-              <div 
+              <div
                 className={`w-3 h-3 rounded-full transition-all ${
-                  idx < currentRoundIndex 
-                    ? 'bg-green-500' 
-                    : idx === currentRoundIndex 
-                    ? 'bg-blue-500 ring-2 ring-blue-300' 
+                  idx < currentRoundIndex
+                    ? 'bg-green-500'
+                    : idx === currentRoundIndex
+                    ? 'bg-blue-500 ring-2 ring-blue-300'
                     : 'bg-gray-600'
                 }`}
                 title={`Round ${idx + 1}: ${round.title}`}

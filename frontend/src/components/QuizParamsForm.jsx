@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 
-function QuizParamsForm({ 
-  initialParams = {}, 
-  onSubmit, 
+function QuizParamsForm({
+  initialParams = {},
+  onSubmit,
   isSubmitting = false,
   submitLabel = 'Generate Quiz',
   error = ''
 }) {
   const [theme, setTheme] = useState('');
   const [participants, setParticipants] = useState([{ name: '', age: '', country: '' }]);
-  const [selectedTypes, setSelectedTypes] = useState(['text', 'audio', 'video', 'true_false', 'multiple_choice']);
+  const [selectedTypes, setSelectedTypes] = useState(['audio', 'video', 'true_false', 'multiple_choice']);
   const [rounds, setRounds] = useState(3);
   const [questionsPerRound, setQuestionsPerRound] = useState(7);
   const [brainrotLevel, setBrainrotLevel] = useState('medium');
@@ -45,7 +45,7 @@ function QuizParamsForm({
     }
   }, [JSON.stringify(initialParams)]); // Serialize to detect deep changes
 
-  const questionTypes = ['text', 'audio', 'video', 'true_false', 'multiple_choice'];
+  const questionTypes = ['audio', 'video', 'image', 'true_false', 'multiple_choice'];
 
   const addParticipant = () => {
     setParticipants([...participants, { name: '', age: '', country: '' }]);
@@ -73,9 +73,9 @@ function QuizParamsForm({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     const validParticipants = participants.filter(p => p.name && p.age && p.country);
-    
+
     if (!theme || validParticipants.length === 0 || selectedTypes.length === 0) {
       return;
     }

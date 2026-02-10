@@ -17,18 +17,18 @@ class WikimediaSearchService
     }
 
     response = HTTParty.get(url, query: params)
-    
+
     unless response.success?
       Rails.logger.error("Wikimedia API error: #{response.code} - #{response.body}")
       raise SearchError, "Wikimedia search failed: #{response.code}"
     end
 
     pages = response.parsed_response.dig('query', 'pages') || {}
-    
+
     results = pages.values.map do |page|
       image_info = page.dig('imageinfo', 0)
       next unless image_info
-      
+
       {
         title: page['title']&.gsub('File:', ''),
         url: image_info['url'],
@@ -49,14 +49,14 @@ class WikimediaSearchService
     # Try exact match first
     results = search(query, max_results: max_results)
     return results unless results.empty?
-    
+
     # Try with common qualifiers
     qualifiers = ['logo', 'character', 'artwork', 'poster', 'photo']
     qualifiers.each do |qualifier|
       results = search("#{query} #{qualifier}", max_results: max_results)
       return results unless results.empty?
     end
-    
+
     []
   end
 end

@@ -18,7 +18,7 @@ function CreateQuizPage() {
       attempts++;
       try {
         const data = await getQuiz(quizId);
-        
+
         if (data.status === 'ready') {
           clearInterval(poll);
           setIsGenerating(false);

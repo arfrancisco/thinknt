@@ -9,15 +9,15 @@ FactoryBot.define do
         'rounds' => 3,
         'questions_per_round' => 7,
         'brainrot_level' => 'medium',
-        'allowed_types' => ['text', 'audio', 'video', 'image', 'true_false', 'multiple_choice']
+        'allowed_types' => ['audio', 'video', 'image', 'true_false', 'multiple_choice']
       }
     end
-    
+
     trait :ready do
       status { :ready }
       quiz_data { JSON.parse(File.read(Rails.root.join('spec/fixtures/sample_quiz.json'))) }
     end
-    
+
     trait :failed do
       status { :failed }
       error_message { "OpenAI API error" }

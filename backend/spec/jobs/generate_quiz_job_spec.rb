@@ -9,7 +9,7 @@ RSpec.describe GenerateQuizJob, type: :job do
       'rounds' => 2,
       'questions_per_round' => 3,
       'brainrot_level' => 'medium',
-      'allowed_types' => ['text', 'multiple_choice']
+      'allowed_types' => ['multiple_choice']
     }
   end
 
@@ -24,7 +24,7 @@ RSpec.describe GenerateQuizJob, type: :job do
 
     it 'successfully generates quiz and updates record to ready' do
       described_class.new.perform(quiz.id, generation_params)
-      
+
       quiz.reload
       expect(quiz.status).to eq('ready')
       expect(quiz.quiz_data).to be_present
@@ -35,9 +35,9 @@ RSpec.describe GenerateQuizJob, type: :job do
       allow(OpenaiQuizGenerator).to receive(:generate).and_raise(
         OpenaiQuizGenerator::GenerationError.new('API error')
       )
-      
+
       described_class.new.perform(quiz.id, generation_params)
-      
+
       quiz.reload
       expect(quiz.status).to eq('failed')
       expect(quiz.error_message).to include('API error')
@@ -48,9 +48,9 @@ RSpec.describe GenerateQuizJob, type: :job do
       allow(OpenaiQuizGenerator).to receive(:generate).and_raise(
         OpenaiQuizGenerator::GenerationError.new(error_message)
       )
-      
+
       described_class.new.perform(quiz.id, generation_params)
-      
+
       quiz.reload
       expect(quiz.error_message).to eq(error_message)
     end
@@ -62,7 +62,7 @@ RSpec.describe GenerateQuizJob, type: :job do
           participants: generation_params['participants']
         )
       )
-      
+
       described_class.new.perform(quiz.id, generation_params)
     end
   end

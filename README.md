@@ -124,7 +124,6 @@ frontend/src/
 │   ├── QuestionFrame.jsx                       # Type dispatcher
 │   ├── AnswerReveal.jsx                        # Answer modal
 │   └── renderers/                              # Question type renderers
-│       ├── TextRenderer.jsx
 │       ├── AudioRenderer.jsx
 │       ├── VideoRenderer.jsx
 │       ├── ImageRenderer.jsx
@@ -149,7 +148,7 @@ Create a new quiz and start generation.
   "rounds": 3,
   "questions_per_round": 7,
   "brainrot_level": "medium",
-  "allowed_types": ["text", "audio", "video", "image", "true_false", "multiple_choice"]
+  "allowed_types": ["audio", "video", "image", "true_false", "multiple_choice"]
 }
 ```
 
